@@ -86,21 +86,27 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
   import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-  // --- ВСТАВЬТЕ СВОИ ДАННЫЕ ИЗ FIREBASE CONSOLE ТУТ ---
-  const firebaseConfig = {
-   apiKey: "AIzaSyD-DalO0ffnu8zJDY45jmr-RGRKBsp7mbs",
-  authDomain: "builder131.firebaseapp.com",
-  projectId: "builder131",
-  storageBucket: "builder131.firebasestorage.app",
-  messagingSenderId: "552002450795",
-  appId: "1:552002450795:web:fad81570be1d340f42082e"
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+<script>
+    const firebaseConfig = {
+    apiKey: "AIzaSyD-DalO0ffnu8zJDY45jmr-RGRKBsp7mbs",
+    authDomain: "builder131.firebaseapp.com",
+    projectId: "builder131",
+    storageBucket: "builder131.firebasestorage.app",
+    messagingSenderId: "552002450795",
+    appId: "1:552002450795:web:fad81570be1d340f42082e"
   };
+
+    firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore(); 
+  </script>
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  // --- ИГРОВАЯ ЛОГИКА ---
-  const COLS = 14, ROWS = 20, CELL = 32;
+    const COLS = 14, ROWS = 20, CELL = 32;
   const canvas = document.getElementById("game"), ctx = canvas.getContext("2d");
   const container = document.getElementById("game-container");
   const menuOverlay = document.getElementById("menu-overlay");
@@ -122,7 +128,6 @@
     { name:"Z", matrix:[[1,1,0],[0,1,1]] }
   ];
 
-  // Авто-определение страны
   async function detectCountry() {
     try {
       const res = await fetch('https://ipapi.co/json/');
@@ -337,3 +342,4 @@
 </body>
 
 </html>
+
