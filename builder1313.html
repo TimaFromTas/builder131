@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Builder — Version 1.3.2 (Firebase)</title>
+  <style>
+    :root {
+      --primary-color: #f0c200;
+      --bg-dark: #121212;
+      --panel-bg: #222;
+      --accent-orange: #d28b22;
+      --focus-glow: rgba(240, 194, 0, 0.4);
+    }
+    * { box-sizing: border-box; touch-action: manipulation; }
+    body { margin: 0; background: var(--bg-dark); color: #eaeaea; font-family: 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow: hidden; padding: 10px; }
+    #game-container { position: relative; width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 10px; transition: transform 0.05s; }
+    h1 { margin: 0; font-size: clamp(18px, 5vw, 24px); font-weight: 700; color: var(--primary-color); text-align: center; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+    .bar { display: flex; gap: 8px; align-items: center; justify-content: space-between; padding: 10px; background: var(--panel-bg); border: 1px solid #444; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+    .stats { font-family: monospace; font-size: 18px; color: var(--primary-color); font-weight: bold; }
+    canvas { display: block; width: 100%; height: auto; aspect-ratio: 14 / 20; background: #0a0a0a; border: 3px solid #333; border-radius: 8px; box-shadow: inset 0 0 20px #000; }
+    #menu-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.85); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px; backdrop-filter: blur(5px); padding: 20px; }
+    .menu-content { background: var(--panel-bg); padding: 25px; border-radius: 16px; border: 2px solid var(--primary-color); box-shadow: 0 0 40px rgba(0,0,0,0.8); width: 100%; max-width: 300px; text-align: center; }
+    .menu-title { font-size: 24px; color: var(--primary-color); margin-bottom: 20px; font-weight: 800; letter-spacing: 1px; }
+    .menu-group { margin-bottom: 12px; text-align: left; }
+    .menu-group label { font-size: 10px; color: #888; text-transform: uppercase; margin-left: 4px; }
+    select { width: 100%; font-size: 14px; padding: 8px; border-radius: 6px; border: 1px solid #444; background: #111; color: #fff; margin-top: 4px; outline: none; cursor: pointer; }
+    .btn-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+    .menu-btn { width: 100%; padding: 12px; font-size: 16px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s; outline: none; }
+    .primary-btn { background: var(--primary-color); color: #000; }
+    .secondary-btn { background: #444; color: #fff; }
+    .controls { display: none; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 60px); gap: 10px; margin-top: 10px; width: 100%; max-width: 300px; margin-left: auto; margin-right: auto; }
+    .ctrl-btn { background: #333; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 28px; color: white; user-select: none; border: 1px solid #444; box-shadow: 0 4px 0 #1a1a1a; cursor: pointer; }
+    .ctrl-btn:active { background: #555; transform: translateY(2px); box-shadow: 0 2px 0 #1a1a1a; }
+    @media (pointer: coarse) { .controls { display: grid; } }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <div id="game-container">
+    <h1>BUILDER 1.3.2</h1>
+    
+    <div class="bar">
+      <div id="status-label" style="font-size: 12px; color: #aaa; font-weight: bold;">READY</div>
+      <select id="country-select" style="width: 50px; font-size: 10px; padding: 2px;">
+        <option value="RU">RU</option><option value="US">US</option><option value="KZ">KZ</option><option value="BY">BY</option><option value="UA">UA</option>
+      </select>
+      <div id="time" class="stats">00:00</div>
+    </div>
+
+    <div id="menu-overlay">
+      <div class="menu-content">
+        <div id="menu-header" class="menu-title">BUILDER</div>
+        <div class="menu-group">
+          <label>Speed (Easy, Medium, Hard)</label>
+          <select id="speed-select" class="nav-item">
+            <option value="1">Easy</option><option value="3" selected>Medium</option><option value="5">Hard</option>
+          </select>
+        </div>
+        <div class="menu-group">
+          <label>Difficulty (1, 2, 3)</label>
+          <select id="diff-select" class="nav-item">
+            <option value="0">1 (Empty)</option><option value="10">2 (Advanced)</option><option value="20" selected>3 (Expert)</option>
+          </select>
+        </div>
+        <div class="btn-stack">
+          <button id="resume-btn" class="menu-btn primary-btn nav-item">START GAME</button>
+          <button id="restart-btn" class="menu-btn secondary-btn nav-item">RESTART</button>
+        </div>
+      </div>
+    </div>
+
+    <canvas id="game" width="448" height="640"></canvas>
+
+    <div class="controls">
+      <div class="ctrl-btn" id="btn-left">←</div>
+      <div class="ctrl-btn" id="btn-rotate">↻</div>
+      <div class="ctrl-btn" id="btn-right">→</div>
+      <div class="ctrl-btn" id="btn-pause">⏸</div>
+      <div class="ctrl-btn" id="btn-down">↓</div>
+    </div>
+  </div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+  // --- ВСТАВЬТЕ СВОИ ДАННЫЕ ИЗ FIREBASE CONSOLE ТУТ ---
+  const firebaseConfig = {
+   apiKey: "AIzaSyD-DalO0ffnu8zJDY45jmr-RGRKBsp7mbs",
+  authDomain: "builder131.firebaseapp.com",
+  projectId: "builder131",
+  storageBucket: "builder131.firebasestorage.app",
+  messagingSenderId: "552002450795",
+  appId: "1:552002450795:web:fad81570be1d340f42082e"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // --- ИГРОВАЯ ЛОГИКА ---
+  const COLS = 14, ROWS = 20, CELL = 32;
+  const canvas = document.getElementById("game"), ctx = canvas.getContext("2d");
+  const container = document.getElementById("game-container");
+  const menuOverlay = document.getElementById("menu-overlay");
+  const menuHeader = document.getElementById("menu-header");
+  const resumeBtn = document.getElementById("resume-btn");
+  const restartBtn = document.getElementById("restart-btn");
+  const statusLabel = document.getElementById("status-label");
+  const countrySelect = document.getElementById("country-select");
+
+  let board = null, worker = null, bombFuses = new Map();
+  let running = false, gameOver = false, firstLoad = true, lastTs = 0;
+  let dropAcc = 0, workerAcc = 0, timerMs = 0, frameCount = 0, shakeAmount = 0;
+  let currentShape = null, currentShapeName = "", shapeRow = 0, shapeCol = 0, speedLevel = 3;
+
+  const SHAPES = [
+    { name:"I", matrix:[[1,1,1,1]] }, { name:"J", matrix:[[1,0,0],[1,1,1]] },
+    { name:"L", matrix:[[0,0,1],[1,1,1]] }, { name:"O", matrix:[[1,1],[1,1]] },
+    { name:"S", matrix:[[0,1,1],[1,1,0]] }, { name:"T", matrix:[[0,1,0],[1,1,1]] },
+    { name:"Z", matrix:[[1,1,0],[0,1,1]] }
+  ];
+
+  // Авто-определение страны
+  async function detectCountry() {
+    try {
+      const res = await fetch('https://ipapi.co/json/');
+      const data = await res.json();
+      if (data.country_code) countrySelect.value = data.country_code;
+    } catch (e) { console.warn("Geo IP failed"); }
+  }
+  detectCountry();
+
+  function triggerShake(intensity = 6) { shakeAmount = intensity; }
+
+  function initGame() {
+    board = Array.from({length: ROWS}, () => Array(COLS).fill(0));
+    const startCol = Math.floor(COLS / 2);
+    const startRow = ROWS - 1;
+    worker = { row: startRow, col: startCol, visualX: startCol * CELL, visualY: (startRow - 1) * CELL, dir: 1, alive: true, reachedExit: false };
+    bombFuses = new Map();
+    gameOver = false; running = true; firstLoad = false;
+    lastTs = performance.now(); dropAcc = 0; workerAcc = 0; timerMs = 0;
+    currentShape = null;
+    speedLevel = +document.getElementById("speed-select").value;
+    generateObstacles(+document.getElementById("diff-select").value);
+    resumeBtn.textContent = "RESUME";
+    menuOverlay.classList.add("hidden");
+    statusLabel.textContent = "BUILDING";
+  }
+
+  function generateObstacles(count) {
+    if (!board || count === 0) return;
+    let placed = 0;
+    while(placed < count) {
+      let r = ROWS - 1 - Math.floor(Math.random() * 8);
+      let c = Math.floor(Math.random() * COLS);
+      if (board[r][c] === 0 && !(worker && c === worker.col && r >= worker.row - 1)) { board[r][c] = 1; placed++; }
+    }
+  }
+
+  function isSolid(r, c) {
+    if (!board || r < 0 || r >= ROWS || c < 0 || c >= COLS) return true;
+    return board[r][c] !== 0;
+  }
+
+  function workerOccupies(r, c) { return worker && worker.alive && !worker.reachedExit && c === worker.col && (r === worker.row || r === worker.row - 1); }
+
+  async function sendToFirebase(totalMs) {
+    const sec = Math.floor(totalMs / 1000);
+    const mm = String(Math.floor(sec / 60)).padStart(2, '0');
+    const ss = String(sec % 60).padStart(2, '0');
+    const formatted = `${mm}:${ss}`;
+
+    let savedName = localStorage.getItem('builder_name');
+    let name = prompt("ПОБЕДА! Время: " + formatted + "\nВведите ваше имя:", savedName || "Builder");
+    
+    if (name) {
+      localStorage.setItem('builder_name', name);
+      try {
+        await addDoc(collection(db, "leaderboard"), {
+          playerName: name,
+          country: countrySelect.value,
+          timeFormatted: formatted,
+          timeInSeconds: sec,
+          speed: document.getElementById("speed-select").options[document.getElementById("speed-select").selectedIndex].text.toLowerCase(),
+          difficulty: document.getElementById("diff-select").selectedIndex + 1,
+          createdAt: serverTimestamp()
+        });
+      } catch (e) { console.error("Firebase error", e); }
+    }
+  }
+
+  function endGame(isWin, msg) { 
+    gameOver = true; running = false; 
+    if (isWin) sendToFirebase(timerMs);
+    menuHeader.textContent = isWin ? "VICTORY" : msg;
+    menuHeader.style.color = isWin ? "#4caf50" : "#ff5252";
+    menuOverlay.classList.remove("hidden");
+  }
+
+  function updateWorker() {
+    if (!worker || !worker.alive || worker.reachedExit || gameOver || !running) return;
+    // Зеленые двери на 2 клетки ниже верхнего края (row 2-3)
+    if (worker.row === 3 && ((worker.col === 0 && worker.dir === -1) || (worker.col === COLS - 1 && worker.dir === 1))) {
+      worker.reachedExit = true; endGame(true, "VICTORY"); return;
+    }
+    if (worker.row < ROWS - 1 && !isSolid(worker.row + 1, worker.col)) {
+        let blocked = false;
+        if (currentShape) currentShape.forEach((row, r) => row.forEach((v, c) => { if(v && (shapeRow+r === worker.row+1) && (shapeCol+c === worker.col)) blocked = true; }));
+        if (!blocked) { worker.row++; return; }
+    }
+    const canOccupy = (r, c) => {
+        if (r < 1 || r >= ROWS || c < 0 || c >= COLS || isSolid(r, c) || isSolid(r - 1, c)) return false;
+        let blocked = false;
+        if (currentShape) currentShape.forEach((row, sr) => row.forEach((v, sc) => { if(v && ( (shapeRow+sr === r && shapeCol+sc === c) || (shapeRow+sr === r-1 && shapeCol+sc === c) )) blocked = true; }));
+        return !blocked;
+    };
+    let nc = worker.col + worker.dir;
+    if (nc < 0 || nc >= COLS) { worker.dir *= -1; return; }
+    if (canOccupy(worker.row, nc)) { worker.col = nc; }
+    else if (canOccupy(worker.row - 1, nc) && isSolid(worker.row, nc)) { worker.row--; worker.col = nc; }
+    else { worker.dir *= -1; }
+  }
+
+  function collidesWithWorld(row, col, shape) {
+    for(let r=0; r<shape.length; r++) for(let c=0; c<shape[r].length; c++) {
+      if(shape[r][c] !== 0) {
+        let rr = row + r, cc = col + c;
+        if (rr<0 || rr>=ROWS || cc<0 || cc>=COLS || board[rr][cc]!==0) return true;
+      }
+    }
+    return false;
+  }
+
+  function checkWorkerCrush(row, col, shape) {
+    for(let r=0; r<shape.length; r++) for(let c=0; c<shape[r].length; c++) {
+      if(shape[r][c] !== 0 && workerOccupies(row + r, col + c)) return true;
+    }
+    return false;
+  }
+
+  function spawn() {
+    let s = SHAPES[Math.floor(Math.random()*SHAPES.length)];
+    currentShape = s.matrix.map(row => [...row]); currentShapeName = s.name;
+    shapeRow = 0; shapeCol = Math.floor((COLS - currentShape[0].length)/2);
+    if(collidesWithWorld(shapeRow, shapeCol, currentShape)) endGame(false, "CAVE-IN");
+  }
+
+  function lock() {
+    if(checkWorkerCrush(shapeRow, shapeCol, currentShape)) { worker.alive = false; endGame(false, "CRUSHED"); return; }
+    currentShape.forEach((row, r) => row.forEach((v, c) => { if(v) board[shapeRow+r][shapeCol+c] = 1; }));
+    for(let r=ROWS-1; r>=0; r--) if(board[r].every(v => v !== 0)) { board.splice(r, 1); board.unshift(Array(COLS).fill(0)); r++; }
+    currentShape = null; triggerShake(5);
+  }
+
+  function hardDrop() {
+    if(!currentShape || !running) return;
+    while(!collidesWithWorld(shapeRow+1, shapeCol, currentShape)) {
+      if (checkWorkerCrush(shapeRow + 1, shapeCol, currentShape)) { shapeRow++; worker.alive = false; endGame(false, "CRUSHED"); return; }
+      shapeRow++;
+    }
+    lock();
+  }
+
+  function render() {
+    frameCount++;
+    if (shakeAmount > 0) {
+      container.style.transform = `translate(${(Math.random()-0.5)*shakeAmount}px, ${(Math.random()-0.5)*shakeAmount}px)`;
+      shakeAmount *= 0.9; if (shakeAmount < 0.2) { shakeAmount = 0; container.style.transform = `translate(0,0)`; }
+    }
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    
+    // Зеленые двери (2 клетки от верха)
+    ctx.fillStyle = "#008000"; ctx.fillRect(0, CELL * 2, 8, CELL * 2); ctx.fillRect(canvas.width - 8, CELL * 2, 8, CELL * 2);
+
+    for(let r=0; r<ROWS; r++) for(let c=0; c<COLS; c++) {
+      if(board[r][c] === 1) {
+        ctx.fillStyle = "#8b4513"; ctx.fillRect(c*CELL, r*CELL, CELL-1, CELL-1);
+      }
+    }
+    if(currentShape) {
+      ctx.fillStyle = "#cd853f";
+      currentShape.forEach((row, r) => row.forEach((v, c) => { if(v) ctx.fillRect((shapeCol+c)*CELL, (shapeRow+r)*CELL, CELL-1, CELL-1); }));
+    }
+    if(worker && worker.alive && !worker.reachedExit) {
+      worker.visualX += (worker.col * CELL - worker.visualX) * 0.3;
+      worker.visualY += ((worker.row - 1) * CELL - worker.visualY) * 0.3;
+      ctx.fillStyle = "#f0c200"; ctx.fillRect(worker.visualX+6, worker.visualY+10, 20, 22);
+      ctx.fillStyle = "#000"; ctx.fillRect(worker.dir===1?worker.visualX+20:worker.visualX+8, worker.visualY+14, 4, 4);
+    }
+  }
+
+  function tick(ts) {
+    if(running && !gameOver) {
+      let dt = ts - (lastTs || ts); lastTs = ts; timerMs += dt;
+      if(!currentShape) spawn();
+      dropAcc += dt; 
+      if(dropAcc >= (1200 - speedLevel*200)) { 
+        dropAcc = 0; 
+        if(!collidesWithWorld(shapeRow+1, shapeCol, currentShape)) {
+          if (checkWorkerCrush(shapeRow + 1, shapeCol, currentShape)) { shapeRow++; worker.alive = false; endGame(false, "CRUSHED"); }
+          else shapeRow++;
+        } else lock();
+      }
+      workerAcc += dt; if(workerAcc > 180) { workerAcc=0; updateWorker(); }
+      const totalSec = Math.floor(timerMs/1000);
+      document.getElementById("time").textContent = `${String(Math.floor(totalSec/60)).padStart(2,'0')}:${String(totalSec%60).padStart(2,'0')}`;
+    } else lastTs = ts;
+    render(); requestAnimationFrame(tick);
+  }
+
+  // Controls
+  resumeBtn.onclick = () => (firstLoad || gameOver) ? initGame() : (menuOverlay.classList.add("hidden"), running=true);
+  restartBtn.onclick = () => initGame();
+  document.getElementById("btn-pause").onclick = () => { running = false; menuOverlay.classList.remove("hidden"); menuHeader.textContent="PAUSED"; };
+  
+  document.addEventListener("keydown", e => {
+    if(!running || gameOver) return;
+    if(e.key === "ArrowLeft" && !collidesWithWorld(shapeRow, shapeCol-1, currentShape) && !checkWorkerCrush(shapeRow, shapeCol-1, currentShape)) shapeCol--;
+    if(e.key === "ArrowRight" && !collidesWithWorld(shapeRow, shapeCol+1, currentShape) && !checkWorkerCrush(shapeRow, shapeCol+1, currentShape)) shapeCol++;
+    if(e.key === "ArrowDown") hardDrop();
+    if(e.key === "ArrowUp") { 
+      let r = currentShape[0].map((_, i) => currentShape.map(row => row[i]).reverse());
+      if(!collidesWithWorld(shapeRow, shapeCol, r) && !checkWorkerCrush(shapeRow, shapeCol, r)) currentShape = r;
+    }
+  });
+
+  document.getElementById("btn-left").onclick = () => { if(running && !collidesWithWorld(shapeRow, shapeCol-1, currentShape)) shapeCol--; };
+  document.getElementById("btn-right").onclick = () => { if(running && !collidesWithWorld(shapeRow, shapeCol+1, currentShape)) shapeCol++; };
+  document.getElementById("btn-rotate").onclick = () => { if(running) { let r = currentShape[0].map((_, i) => currentShape.map(row => row[i]).reverse()); if(!collidesWithWorld(shapeRow, shapeCol, r)) currentShape = r; } };
+  document.getElementById("btn-down").onclick = () => hardDrop();
+
+  requestAnimationFrame(tick);
+</script>
+</body>
+</html>
