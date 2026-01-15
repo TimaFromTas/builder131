@@ -1,50 +1,186 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Builder — Version 1.4.3</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Builder — Version 1.3.1</title>
   <style>
     :root {
       --primary-color: #f0c200;
       --bg-dark: #121212;
       --panel-bg: #222;
+      --accent-orange: #d28b22;
+      --focus-glow: rgba(240, 194, 0, 0.4);
     }
-    body {
-      margin: 0;
-      background: var(--bg-dark);
-      color: #eaeaea;
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      touch-action: manipulation;
-      overflow: hidden;
+    
+    * { box-sizing: border-box; touch-action: manipulation; }
+
+    body { 
+      margin: 0; 
+      background: var(--bg-dark); 
+      color: #eaeaea; 
+      font-family: 'Segoe UI', system-ui, sans-serif; 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      justify-content: center;
+      min-height: 100vh;
+      overflow: hidden; 
+      padding: 10px;
+    }
+
+    #game-container { 
+      position: relative;
+      width: 100%; 
+      max-width: 500px; 
+      display: flex; 
+      flex-direction: column; 
+      gap: 10px;
+      transition: transform 0.05s;
+    }
+
+    h1 { 
+      margin: 0; 
+      font-size: clamp(18px, 5vw, 24px); 
+      font-weight: 700; 
+      color: var(--primary-color); 
+      text-align: center;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5); 
+    }
+
+    .bar { 
+      display: flex; 
+      gap: 8px; 
+      align-items: center; 
+      justify-content: space-between; 
+      padding: 10px; 
+      background: var(--panel-bg); 
+      border: 1px solid #444; 
+      border-radius: 12px; 
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5); 
+    }
+
+    .stats { font-family: monospace; font-size: 18px; color: var(--primary-color); font-weight: bold; }
+
+    canvas { 
+      display: block; 
+      width: 100%; 
+      height: auto; 
+      aspect-ratio: 14 / 20;
+      background: #0a0a0a; 
+      border: 3px solid #333; 
+      border-radius: 8px; 
+      box-shadow: inset 0 0 20px #000; 
+    }
+
+    /* Меню Оверлей */
+    #menu-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 100;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
+      border-radius: 8px;
+      backdrop-filter: blur(5px);
+      padding: 20px;
     }
-    #game-container {
-      position: relative;
+
+    .menu-content {
+      background: var(--panel-bg);
+      padding: 25px;
+      border-radius: 16px;
+      border: 2px solid var(--primary-color);
+      box-shadow: 0 0 40px rgba(0,0,0,0.8);
       width: 100%;
-      max-width: 448px;
+      max-width: 300px;
+      text-align: center;
+    }
+
+    .menu-title {
+      font-size: 24px;
+      color: var(--primary-color);
+      margin-bottom: 20px;
+      font-weight: 800;
+      letter-spacing: 1px;
+    }
+
+    .menu-group {
+      margin-bottom: 12px;
+      text-align: left;
+    }
+
+    .menu-group label {
+      font-size: 10px;
+      color: #888;
+      text-transform: uppercase;
+      margin-left: 4px;
+    }
+
+    select { 
+      width: 100%;
+      font-size: 14px; 
+      padding: 8px; 
+      border-radius: 6px; 
+      border: 1px solid #444; 
+      background: #111; 
+      color: #fff; 
+      margin-top: 4px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    /* Фокус для клавиатуры */
+    select:focus, .menu-btn:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 10px var(--focus-glow);
+      transform: scale(1.02);
+    }
+
+    .btn-stack {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
+      margin-top: 20px;
     }
-    canvas {
-      display: block;
+
+    .menu-btn { 
       width: 100%;
-      height: auto;
-      aspect-ratio: 14 / 20;
-      background: #0a0a0a;
-      border: 4px solid #333;
-      border-radius: 12px;
-      box-shadow: inset 0 0 30px #000, 0 10px 25px rgba(0,0,0,0.5);
+      padding: 12px;
+      font-size: 16px;
+      border: none; 
+      border-radius: 8px;
+      font-weight: bold; 
+      cursor: pointer;
+      transition: all 0.2s;
+      outline: none;
     }
+
+    .primary-btn { background: var(--primary-color); color: #000; }
+    .secondary-btn { background: #444; color: #fff; }
+    .ad-btn { background: transparent; color: var(--primary-color); border: 1px solid var(--primary-color); font-size: 12px; margin-top: 5px;}
+
+    .menu-btn:active { transform: scale(0.96); }
+    .menu-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* Mobile Controls */
+    .controls {
+      display: none; 
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(2, 60px);
+      gap: 10px;
+      margin-top: 10px;
+      width: 100%;
+      max-width: 300px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
     .ctrl-btn {
       background: #333;
-      border-radius: 16px;
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -52,521 +188,488 @@
       color: white;
       user-select: none;
       border: 1px solid #444;
-      box-shadow: 0 5px 0 #1a1a1a;
-      height: 64px;
-      transition: all 0.1s;
+      box-shadow: 0 4px 0 #1a1a1a;
       cursor: pointer;
     }
-    .ctrl-btn:active {
-      background: #444;
-      transform: translateY(3px);
-      box-shadow: 0 2px 0 #1a1a1a;
+    
+    .ctrl-btn:active { background: #555; transform: translateY(2px); box-shadow: 0 2px 0 #1a1a1a; }
+    .hint { font-size: 10px; color: #666; text-align: center; margin-top: 5px; }
+
+    @media (pointer: coarse) {
+      .controls { display: grid; }
+      .hint { display: none; }
     }
-    .modal-overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.9);
-      backdrop-filter: blur(6px);
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      border-radius: 12px;
-    }
-    .menu-card {
-      background: var(--panel-bg);
-      padding: 30px;
-      border-radius: 24px;
-      border: 2px solid var(--primary-color);
-      width: 100%;
-      max-width: 320px;
-      text-align: center;
-      box-shadow: 0 0 50px rgba(240, 194, 0, 0.2);
-    }
-    select {
-      appearance: none;
-      background: #111;
-      border: 1px solid #444;
-      color: white;
-      padding: 10px;
-      border-radius: 8px;
-      width: 100%;
-      margin-top: 4px;
-      cursor: pointer;
-    }
+    
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
 
   <div id="game-container">
-    <h1 class="text-center text-yellow-500 font-black text-2xl tracking-tighter uppercase italic">Builder 1.4.3</h1>
+    <h1>BUILDER 1.3.1</h1>
     
-    <div class="flex justify-between items-center bg-[#222] p-3 rounded-xl border border-gray-700 shadow-xl">
-      <div class="flex flex-col">
-        <span class="text-[10px] text-gray-500 font-bold uppercase leading-none">Status</span>
-        <span id="status-label" class="text-sm font-bold text-yellow-500 uppercase">Ready</span>
-      </div>
-      <div id="timer-display" class="text-2xl font-mono text-yellow-500 font-bold tracking-widest">00:00</div>
+    <div class="bar">
+      <div id="status-label" style="font-size: 12px; color: #aaa; font-weight: bold;">READY</div>
+      <div id="time" class="stats">00:00</div>
     </div>
 
-    <canvas id="game-canvas" width="448" height="640"></canvas>
-
-    <div class="grid grid-cols-3 gap-3 w-full max-w-[340px] mx-auto mt-2">
-      <div class="ctrl-btn" id="btn-left">←</div>
-      <div class="ctrl-btn" id="btn-rotate">↻</div>
-      <div class="ctrl-btn" id="btn-right">→</div>
-      <div class="ctrl-btn" id="btn-pause">⏸</div>
-      <div class="ctrl-btn" id="btn-down">↓</div>
-    </div>
-
-    <div id="menu-modal" class="modal-overlay">
-      <div class="menu-card">
-        <h2 id="menu-title" class="text-3xl font-black text-yellow-500 mb-6 italic">BUILDER</h2>
+    <!-- Overlay Menu -->
+    <div id="menu-overlay" role="dialog" aria-modal="true">
+      <div class="menu-content">
+        <div id="menu-header" class="menu-title">BUILDER</div>
         
-        <div class="text-left mb-4">
-          <label class="text-[11px] text-gray-500 font-bold uppercase ml-1">Скорость (Speed)</label>
-          <select id="speed-select">
+        <div class="menu-group">
+          <label for="speed-select">Speed Level</label>
+          <select id="speed-select" class="nav-item">
             <option value="1">Easy</option>
             <option value="3" selected>Medium</option>
             <option value="5">Hard</option>
           </select>
         </div>
 
-        <div class="text-left mb-8">
-          <label class="text-[11px] text-gray-500 font-bold uppercase ml-1">Сложность (Difficulty)</label>
-          <select id="diff-select">
-            <option value="0">1 (Пусто)</option>
-            <option value="10">2 (Средне)</option>
-            <option value="20" selected>3 (Сложно)</option>
+        <div class="menu-group">
+          <label for="diff-select">Difficulty (Obstacles)</label>
+          <select id="diff-select" class="nav-item">
+            <option value="0">1 (Empty)</option>
+            <option value="10">2 (Advanced)</option>
+            <option value="20" selected>3 (Expert)</option>
           </select>
         </div>
 
-        <button id="start-btn" class="w-full bg-yellow-500 text-black font-black py-4 rounded-xl hover:bg-yellow-400 active:scale-95 transition-all shadow-lg">
-          START GAME
-        </button>
+        <div class="btn-stack">
+          <button id="resume-btn" class="menu-btn primary-btn nav-item">START GAME</button>
+          <button id="restart-btn" class="menu-btn secondary-btn nav-item">RESTART</button>
+          <button id="ad-placeholder" class="menu-btn ad-btn nav-item">WATCH AD (BOOST)</button>
+        </div>
       </div>
     </div>
 
-    <div id="victory-modal" class="modal-overlay hidden">
-      <div class="menu-card border-green-500 shadow-[0_0_50px_rgba(34,197,94,0.2)]">
-        <h2 class="text-3xl font-black text-green-500 mb-2 italic">VICTORY!</h2>
-        <p id="final-time" class="text-white mb-6 font-mono text-2xl bg-black py-2 rounded-lg">Время: 00:00</p>
-        <input id="player-name" type="text" placeholder="Ваше имя" class="w-full bg-black border border-gray-700 p-4 rounded-xl mb-4 text-center text-white focus:border-green-500 outline-none">
-        <button id="submit-score-btn" class="w-full bg-green-500 text-black font-black py-4 rounded-xl hover:bg-green-400 active:scale-95 transition-all shadow-lg">
-          СОХРАНИТЬ
-        </button>
-      </div>
+    <canvas id="game" width="448" height="640"></canvas>
+
+    <div class="controls">
+      <div class="ctrl-btn" id="btn-left" title="Move Left">←</div>
+      <div class="ctrl-btn" id="btn-rotate" title="Rotate Piece">↻</div>
+      <div class="ctrl-btn" id="btn-right" title="Move Right">→</div>
+      <div class="ctrl-btn" id="btn-pause" title="Pause Game">⏸</div>
+      <div class="ctrl-btn" id="btn-down" title="Hard Drop">↓</div>
+      <div></div>
     </div>
+
+    <div class="hint">Arrows: Move/Rotate/Drop | Space/Enter: Menu Navigation</div>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+<script>
+(() => {
+  const COLS = 14, ROWS = 20, CELL = 32;
+  const canvas = document.getElementById("game"), ctx = canvas.getContext("2d");
+  const container = document.getElementById("game-container");
+  const menuOverlay = document.getElementById("menu-overlay");
+  const menuHeader = document.getElementById("menu-header");
+  const resumeBtn = document.getElementById("resume-btn");
+  const restartBtn = document.getElementById("restart-btn");
+  const statusLabel = document.getElementById("status-label");
+  
+  let board = null, worker = null, bombFuses = new Map();
+  let running = false, gameOver = false, firstLoad = true, lastTs = 0;
+  let dropAcc = 0, workerAcc = 0, timerMs = 0, frameCount = 0;
+  let currentShape = null, currentShapeName = "", shapeRow = 0, shapeCol = 0, speedLevel = 3;
+  let shakeAmount = 0; 
 
-    const firebaseConfig = JSON.parse(__firebase_config);
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'builder-v1-4';
+  const SHAPES = [
+    { name:"I", matrix:[[1,1,1,1]] }, { name:"J", matrix:[[1,0,0],[1,1,1]] },
+    { name:"L", matrix:[[0,0,1],[1,1,1]] }, { name:"O", matrix:[[1,1],[1,1]] },
+    { name:"S", matrix:[[0,1,1],[1,1,0]] }, { name:"T", matrix:[[0,1,0],[1,1,1]] },
+    { name:"Z", matrix:[[1,1,0],[0,1,1]] }
+  ];
 
-    let currentUser = null;
-    signInAnonymously(auth).catch(console.error);
-    onAuthStateChanged(auth, (user) => { currentUser = user; });
+  function triggerShake(intensity = 6) { shakeAmount = intensity; }
 
-    const COLS = 14, ROWS = 20, CELL = 32;
-    const canvas = document.getElementById("game-canvas");
-    const ctx = canvas.getContext("2d");
+  function initGame() {
+    board = Array.from({length: ROWS}, () => Array(COLS).fill(0));
+    const startCol = Math.floor(COLS / 2);
+    const startRow = ROWS - 1;
+    worker = { 
+      row: startRow, col: startCol, 
+      visualX: startCol * CELL, visualY: (startRow - 1) * CELL,
+      dir: 1, alive: true, reachedExit: false 
+    };
+    bombFuses = new Map();
+    gameOver = false; 
+    running = true;
+    firstLoad = false;
+    lastTs = performance.now();
+    dropAcc = 0; workerAcc = 0; timerMs = 0;
+    currentShape = null;
+    speedLevel = +document.getElementById("speed-select").value;
+    generateObstacles(+document.getElementById("diff-select").value);
+    
+    resumeBtn.textContent = "RESUME";
+    menuOverlay.classList.add("hidden");
+    statusLabel.textContent = "BUILDING";
+  }
 
-    const SHAPES = [
-      { name:"I", matrix:[[1,1,1,1]] },
-      { name:"J", matrix:[[1,0,0],[1,1,1]] },
-      { name:"L", matrix:[[0,0,1],[1,1,1]] },
-      { name:"O", matrix:[[1,1],[1,1]] },
-      { name:"S", matrix:[[0,1,1],[1,1,0]] },
-      { name:"T", matrix:[[0,1,0],[1,1,1]] },
-      { name:"Z", matrix:[[1,1,0],[0,1,1]] }
-    ];
+  function generateObstacles(count) {
+    if (!board || count === 0) return;
+    let placed = 0;
+    while(placed < count) {
+      let r = ROWS - 1 - Math.floor(Math.random() * 8);
+      let c = Math.floor(Math.random() * COLS);
+      if (board[r][c] === 0 && !(worker && c === worker.col && r >= worker.row - 1)) {
+        board[r][c] = 1;
+        placed++;
+      }
+    }
+  }
 
-    let board = [];
-    let worker = { row: 18, col: 7, visualX: 7*CELL, visualY: 17*CELL, dir: 1, alive: true, animFrame: 0 };
-    let currentShape = null;
-    let shapePos = { r: 0, c: 0 };
-    let timerMs = 0, lastTs = 0;
-    let running = false;
-    let dropCounter = 0, workerCounter = 0;
-    let speedSetting = 3;
+  function isSolid(r, c) {
+    if (!board || r < 0 || r >= ROWS || c < 0 || c >= COLS) return true;
+    return board[r][c] !== 0;
+  }
 
-    const menuModal = document.getElementById("menu-modal");
-    const victoryModal = document.getElementById("victory-modal");
-    const startBtn = document.getElementById("start-btn");
-    const timerDisplay = document.getElementById("timer-display");
-    const playerNameInput = document.getElementById("player-name");
-    const submitScoreBtn = document.getElementById("submit-score-btn");
-    const statusLabel = document.getElementById("status-label");
+  function workerOccupies(r, c) { 
+    return worker && worker.alive && !worker.reachedExit && c === worker.col && (r === worker.row || r === worker.row - 1); 
+  }
 
-    function initGame() {
-      board = Array.from({length: ROWS}, () => Array(COLS).fill(0));
-      const diffCount = parseInt(document.getElementById("diff-select").value);
-      speedSetting = parseInt(document.getElementById("speed-select").value);
-      
-      let placed = 0;
-      while (placed < diffCount) {
-        let r = ROWS - 1 - Math.floor(Math.random() * 8); 
-        let c = Math.floor(Math.random() * COLS);
-        if (board[r][c] === 0 && !(c === 7 && r >= 17)) {
-          board[r][c] = 1;
-          placed++;
+  function rotate(m) { return m[0].map((_, i) => m.map(row => row[i]).reverse()); }
+
+  function explodeAt(centerR, centerC) {
+    triggerShake(12); 
+    for(let dr=-1; dr<=1; dr++) for(let dc=-1; dc<=1; dc++) {
+      let rr = centerR + dr, cc = centerC + dc;
+      if (board && rr>=0 && rr<ROWS && cc>=0 && cc<COLS) {
+        if (workerOccupies(rr, cc)) { 
+          worker.alive = false; 
+          endGame(false, "BOOM!"); 
         }
-      }
-
-      worker = { row: 18, col: 7, visualX: 7*CELL, visualY: 18*CELL, dir: 1, alive: true, reached: false, animFrame: 0 };
-      timerMs = 0;
-      dropCounter = 0;
-      workerCounter = 0;
-      currentShape = null;
-      running = true;
-      
-      menuModal.classList.add("hidden");
-      victoryModal.classList.add("hidden");
-      statusLabel.textContent = "Строим";
-      lastTs = performance.now();
-      requestAnimationFrame(gameLoop);
-    }
-
-    function spawnShape() {
-      const s = SHAPES[Math.floor(Math.random() * SHAPES.length)];
-      currentShape = s.matrix;
-      shapePos = { r: 0, c: Math.floor((COLS - currentShape[0].length) / 2) };
-      
-      if (checkCollision(shapePos.r, shapePos.c, currentShape)) {
-        endGame("CAVE-IN");
+        board[rr][cc] = 0; bombFuses.delete(`${rr},${cc}`);
       }
     }
+  }
 
-    function checkCollision(r, c, shape) {
-      for (let row = 0; row < shape.length; row++) {
-        for (let col = 0; col < shape[row].length; col++) {
-          if (shape[row][col]) {
-            let nr = r + row;
-            let nc = c + col;
-            if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS || board[nr][nc]) return true;
-            if (worker.alive && nc === worker.col && (nr === worker.row || nr === worker.row + 1)) return true;
-          }
-        }
-      }
-      return false;
+  function updateWorker() {
+    if (!worker || !worker.alive || worker.reachedExit || gameOver || !running) return;
+    
+    if (worker.row === 3 && ((worker.col === 0 && worker.dir === -1) || (worker.col === COLS - 1 && worker.dir === 1))) {
+      worker.reachedExit = true; 
+      endGame(true, "VICTORY!"); 
+      return;
     }
-
-    function lockShape() {
-      currentShape.forEach((row, r) => {
-        row.forEach((v, c) => {
-          if (v) board[shapePos.r + r][shapePos.c + c] = 1;
-        });
-      });
-      
-      if (worker.col === shapePos.c && (worker.row >= shapePos.r && worker.row < shapePos.r + currentShape.length)) {
-          worker.alive = false;
-          endGame("CRUSHED");
-          return;
-      }
-
-      for (let r = ROWS - 1; r >= 0; r--) {
-        if (board[r].every(cell => cell !== 0)) {
-          board.splice(r, 1);
-          board.unshift(Array(COLS).fill(0));
-          r++;
-        }
-      }
-      currentShape = null;
-    }
-
-    function updateWorker() {
-      if (!worker.alive || worker.reached || !running) return;
-
-      if (worker.row <= 3 && (worker.col === 0 || worker.col === COLS - 1)) {
-        worker.reached = true;
-        endGame("VICTORY");
-        return;
-      }
-
-      if (worker.row < ROWS - 2 && !board[worker.row + 2][worker.col]) {
-        let blockAbove = false;
+    
+    if (worker.row < ROWS - 1 && !isSolid(worker.row + 1, worker.col)) {
+        let blockedByShape = false;
         if (currentShape) {
             currentShape.forEach((row, r) => row.forEach((v, c) => {
-                if (v && (shapePos.c + c === worker.col) && (shapePos.r + r === worker.row + 2)) blockAbove = true;
+                if(v && (shapeRow+r === worker.row+1) && (shapeCol+c === worker.col)) blockedByShape = true;
             }));
         }
-        if (!blockAbove) {
-            worker.row++;
-            return;
-        }
-      }
+        if (!blockedByShape) { worker.row++; return; }
+    }
 
-      let nextCol = worker.col + worker.dir;
-      if (nextCol < 0 || nextCol >= COLS) {
-        worker.dir *= -1;
-        return;
-      }
-
-      const isPathClear = (r, c) => {
-        if (c < 0 || c >= COLS || r < 0 || r >= ROWS - 1) return false;
-        let blockedByStatic = board[r][c] || board[r+1][c];
-        let blockedByFalling = false;
+    const canOccupy = (r, c) => {
+        if (r < 1 || r >= ROWS || c < 0 || c >= COLS) return false;
+        if (isSolid(r, c) || isSolid(r - 1, c)) return false;
+        let blockedByShape = false;
         if (currentShape) {
             currentShape.forEach((row, sr) => row.forEach((v, sc) => {
-                if (v && (shapePos.c + sc === c) && (shapePos.r + sr === r || shapePos.r + sr === r + 1)) blockedByFalling = true;
+                if(v && ( (shapeRow+sr === r && shapeCol+sc === c) || (shapeRow+sr === r-1 && shapeCol+sc === c) )) blockedByShape = true;
             }));
         }
-        return !blockedByStatic && !blockedByFalling;
-      };
-
-      if (isPathClear(worker.row, nextCol)) {
-        worker.col = nextCol;
-        worker.animFrame++; // Двигаем ноги
-      } else if (isPathClear(worker.row - 1, nextCol) && (board[worker.row + 1][nextCol])) {
-        worker.row--;
-        worker.col = nextCol;
-        worker.animFrame++;
-      } else {
-        worker.dir *= -1;
-      }
-    }
-
-    function endGame(type) {
-      running = false;
-      if (type === "VICTORY") {
-        const sec = Math.floor(timerMs / 1000);
-        const mm = String(Math.floor(sec / 60)).padStart(2, '0');
-        const ss = String(sec % 60).padStart(2, '0');
-        document.getElementById("final-time").textContent = `Время: ${mm}:${ss}`;
-        victoryModal.classList.remove("hidden");
-      } else {
-        document.getElementById("menu-title").textContent = type === "CAVE-IN" ? "ОБВАЛ" : "РАЗДАВЛЕН";
-        document.getElementById("menu-title").style.color = "#ff5252";
-        document.getElementById("start-btn").textContent = "ПОВТОРИТЬ";
-        menuModal.classList.remove("hidden");
-      }
-    }
-
-    async function saveScore() {
-      if (!currentUser) return;
-      const name = playerNameInput.value || "Строитель";
-      const sec = Math.floor(timerMs / 1000);
-      const mm = String(Math.floor(sec / 60)).padStart(2, '0');
-      const ss = String(sec % 60).padStart(2, '0');
-
-      try {
-        await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard'), {
-          playerName: name,
-          timeFormatted: `${mm}:${ss}`,
-          seconds: sec,
-          speed: document.getElementById("speed-select").value,
-          difficulty: document.getElementById("diff-select").value,
-          createdAt: serverTimestamp()
-        });
-        location.reload();
-      } catch (e) { console.error(e); }
-    }
-
-    function gameLoop(ts) {
-      if (!running) return;
-      const dt = ts - lastTs;
-      lastTs = ts;
-      timerMs += dt;
-
-      const totalSec = Math.floor(timerMs/1000);
-      timerDisplay.textContent = `${String(Math.floor(totalSec/60)).padStart(2,'0')}:${String(totalSec%60).padStart(2,'0')}`;
-
-      if (!currentShape) spawnShape();
-
-      dropCounter += dt;
-      const dropInterval = (1100 - speedSetting * 180);
-      if (dropCounter > dropInterval) {
-        dropCounter = 0;
-        if (!checkCollision(shapePos.r + 1, shapePos.c, currentShape)) {
-          shapePos.r++;
-        } else {
-          lockShape();
-        }
-      }
-
-      workerCounter += dt;
-      if (workerCounter > 150) {
-        workerCounter = 0;
-        updateWorker();
-      }
-
-      draw();
-      requestAnimationFrame(gameLoop);
-    }
-
-    function drawBrick(x, y, color1, color2) {
-      const grad = ctx.createLinearGradient(x, y, x + CELL, y + CELL);
-      grad.addColorStop(0, color1);
-      grad.addColorStop(1, color2);
-      ctx.fillStyle = grad;
-      ctx.fillRect(x + 1, y + 1, CELL - 2, CELL - 2);
-      
-      // Текстура кирпича
-      ctx.strokeStyle = "rgba(0,0,0,0.2)";
-      ctx.lineWidth = 1;
-      // Горизонтальная линия посередине (имитация кладки)
-      ctx.beginPath();
-      ctx.moveTo(x + 1, y + CELL/2);
-      ctx.lineTo(x + CELL - 1, y + CELL/2);
-      ctx.stroke();
-      // Вертикальные швы
-      ctx.beginPath();
-      ctx.moveTo(x + CELL/2, y + 1);
-      ctx.lineTo(x + CELL/2, y + CELL/2);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(x + CELL/4, y + CELL/2);
-      ctx.lineTo(x + CELL/4, y + CELL - 1);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(x + (3*CELL)/4, y + CELL/2);
-      ctx.lineTo(x + (3*CELL)/4, y + CELL - 1);
-      ctx.stroke();
-
-      // Светлый блик
-      ctx.strokeStyle = "rgba(255,255,255,0.15)";
-      ctx.strokeRect(x + 2, y + 2, CELL - 4, CELL - 4);
-    }
-
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      ctx.strokeStyle = "#121212";
-      ctx.lineWidth = 1;
-      for(let i=0; i<=COLS; i++) {
-          ctx.beginPath(); ctx.moveTo(i*CELL, 0); ctx.lineTo(i*CELL, ROWS*CELL); ctx.stroke();
-      }
-      for(let i=0; i<=ROWS; i++) {
-          ctx.beginPath(); ctx.moveTo(0, i*CELL); ctx.lineTo(COLS*CELL, i*CELL); ctx.stroke();
-      }
-
-      // Выходы
-      ctx.fillStyle = "#22c55e";
-      ctx.fillRect(0, 2 * CELL, 8, 2 * CELL);
-      ctx.fillRect(canvas.width - 8, 2 * CELL, 8, 2 * CELL);
-
-      // Отрисовка заблокированных блоков (коричневые)
-      board.forEach((row, r) => {
-        row.forEach((v, c) => {
-          if (v) {
-            drawBrick(c * CELL, r * CELL, "#8b4513", "#5d2e0d");
-          }
-        });
-      });
-
-      // Отрисовка падающей фигуры (желтые кирпичи)
-      if (currentShape) {
-        currentShape.forEach((row, r) => {
-          row.forEach((v, c) => {
-            if (v) {
-              drawBrick((shapePos.c + c) * CELL, (shapePos.r + r) * CELL, "#f0c200", "#b8860b");
-            }
-          });
-        });
-      }
-
-      if (worker.alive && !worker.reached) {
-        worker.visualX += (worker.col * CELL - worker.visualX) * 0.3;
-        worker.visualY += (worker.row * CELL - worker.visualY) * 0.3;
-        
-        const x = worker.visualX;
-        const y = worker.visualY;
-
-        // Ноги
-        ctx.fillStyle = "#333";
-        const legOffset = Math.sin(worker.animFrame * 0.8) * 4;
-        ctx.fillRect(x + 8, y + CELL * 1.6, 6, 12 + (worker.dir === 1 ? legOffset : -legOffset));
-        ctx.fillRect(x + 18, y + CELL * 1.6, 6, 12 + (worker.dir === 1 ? -legOffset : legOffset));
-
-        // Туловище
-        ctx.fillStyle = "#2563eb";
-        ctx.fillRect(x + 6, y + CELL * 0.6, 20, CELL);
-        
-        // Руки
-        ctx.fillStyle = "#fecaca";
-        ctx.fillRect(x + 2, y + CELL * 0.7, 5, 15);
-        ctx.fillRect(x + 25, y + CELL * 0.7, 5, 15);
-
-        // Голова
-        ctx.fillStyle = "#fecaca";
-        ctx.fillRect(x + 8, y + CELL * 0.1, 16, 16);
-
-        // Каска
-        ctx.fillStyle = "#f0c200";
-        ctx.beginPath();
-        ctx.arc(x + 16, y + CELL * 0.2, 10, Math.PI, 0);
-        ctx.fill();
-        ctx.fillRect(x + 4, y + CELL * 0.15, 24, 4);
-        
-        // Лицо
-        ctx.fillStyle = "black";
-        let eyeX = worker.dir === 1 ? x + 20 : x + 8;
-        ctx.fillRect(eyeX, y + CELL * 0.3, 3, 3);
-      }
-    }
-
-    function move(dir) {
-      if (!running || !currentShape) return;
-      if (!checkCollision(shapePos.r, shapePos.c + dir, currentShape)) {
-        shapePos.c += dir;
-      }
-    }
-
-    function rotate() {
-      if (!running || !currentShape) return;
-      const matrix = currentShape;
-      const rotated = matrix[0].map((_, i) => matrix.map(row => row[i]).reverse());
-      if (!checkCollision(shapePos.r, shapePos.c, rotated)) {
-        currentShape = rotated;
-      }
-    }
-
-    function hardDrop() {
-      if (!running || !currentShape) return;
-      while (!checkCollision(shapePos.r + 1, shapePos.c, currentShape)) {
-        shapePos.r++;
-      }
-      lockShape();
-    }
-
-    startBtn.onclick = initGame;
-    submitScoreBtn.onclick = saveScore;
-    
-    document.getElementById("btn-left").onclick = () => move(-1);
-    document.getElementById("btn-right").onclick = () => move(1);
-    document.getElementById("btn-rotate").onclick = rotate;
-    document.getElementById("btn-down").onclick = hardDrop;
-    document.getElementById("btn-pause").onclick = () => {
-      running = !running;
-      if(!running) {
-          statusLabel.textContent = "Пауза";
-          document.getElementById("menu-title").textContent = "ПАУЗА";
-          document.getElementById("start-btn").textContent = "ПРОДОЛЖИТЬ";
-          menuModal.classList.remove("hidden");
-      } else {
-          statusLabel.textContent = "Строим";
-          menuModal.classList.add("hidden");
-          lastTs = performance.now();
-          requestAnimationFrame(gameLoop);
-      }
+        return !blockedByShape;
     };
 
-    window.addEventListener("keydown", e => {
-      if (e.key === "ArrowLeft") move(-1);
-      if (e.key === "ArrowRight") move(1);
-      if (e.key === "ArrowUp") rotate();
-      if (e.key === "ArrowDown") hardDrop();
-      if (e.key === "Escape") document.getElementById("btn-pause").click();
-    });
+    let nc = worker.col + worker.dir;
+    if (nc < 0 || nc >= COLS) { worker.dir *= -1; return; }
+    
+    if (canOccupy(worker.row, nc)) { worker.col = nc; }
+    else if (canOccupy(worker.row - 1, nc) && isSolid(worker.row, nc)) { worker.row--; worker.col = nc; }
+    else { worker.dir *= -1; }
+  }
 
-  </script>
+  function collidesWithWorld(row, col, shape) {
+    if(!shape || !board) return false;
+    for(let r=0; r<shape.length; r++) for(let c=0; c<shape[r].length; c++) {
+      if(shape[r][c] === 0) continue;
+      let rr = row + r, cc = col + c;
+      if (rr<0 || rr>=ROWS || cc<0 || cc>=COLS || board[rr][cc]!==0) return true;
+    }
+    return false;
+  }
+
+  function checkWorkerCrush(row, col, shape) {
+    if(!shape || !worker) return false;
+    for(let r=0; r<shape.length; r++) for(let c=0; c<shape[r].length; c++) {
+      if(shape[r][c] !== 0 && workerOccupies(row + r, col + c)) return true;
+    }
+    return false;
+  }
+
+  function spawn() {
+    let isBomb = Math.random() < 0.15;
+    let s = isBomb ? {name:"bomb", matrix:[[1]]} : SHAPES[Math.floor(Math.random()*SHAPES.length)];
+    currentShape = s.matrix.map(row => [...row]); currentShapeName = s.name;
+    shapeRow = 0; shapeCol = Math.floor((COLS - currentShape[0].length)/2);
+    if(collidesWithWorld(shapeRow, shapeCol, currentShape)) endGame(false, "CAVE-IN");
+  }
+
+  function lock() {
+    if(!currentShape || !board) return;
+    triggerShake(6); 
+    if(checkWorkerCrush(shapeRow, shapeCol, currentShape)) { 
+        worker.alive = false; 
+        endGame(false, "CRUSHED"); 
+        return; 
+    }
+    
+    if (currentShapeName === "bomb") { 
+        board[shapeRow][shapeCol] = 2; 
+        bombFuses.set(`${shapeRow},${shapeCol}`, 1500); 
+    } else {
+      currentShape.forEach((row, r) => row.forEach((v, c) => { if(v) board[shapeRow+r][shapeCol+c] = 1; }));
+      for(let r=ROWS-1; r>=0; r--) if(board[r].every(v => v !== 0)) { board.splice(r, 1); board.unshift(Array(COLS).fill(0)); r++; }
+    }
+    currentShape = null;
+  }
+
+  function hardDrop() {
+    if(!currentShape || gameOver || !running) return;
+    while(true) {
+        if (checkWorkerCrush(shapeRow + 1, shapeCol, currentShape)) {
+            shapeRow++;
+            worker.alive = false;
+            endGame(false, "CRUSHED");
+            return;
+        }
+        if (collidesWithWorld(shapeRow + 1, shapeCol, currentShape)) break;
+        shapeRow++;
+    }
+    lock();
+  }
+
+  function endGame(isWin, msg) { 
+    gameOver = true; 
+    running = false; 
+    menuHeader.textContent = isWin ? "VICTORY" : "GAME OVER";
+    menuHeader.style.color = isWin ? "#4caf50" : "#ff5252";
+    resumeBtn.textContent = "START GAME";
+    statusLabel.textContent = isWin ? "FINISHED" : "FAILED";
+    menuOverlay.classList.remove("hidden");
+    resumeBtn.focus(); // Focus primary button on end
+  }
+
+  function toggleMenu() {
+    if (gameOver) return;
+    if (firstLoad) {
+        menuHeader.textContent = "BUILDER";
+        menuHeader.style.color = "var(--primary-color)";
+        resumeBtn.textContent = "START GAME";
+        menuOverlay.classList.remove("hidden");
+        resumeBtn.focus();
+        return;
+    }
+    
+    running = !running;
+    if (!running) {
+      menuHeader.textContent = "PAUSED";
+      menuHeader.style.color = "var(--primary-color)";
+      menuOverlay.classList.remove("hidden");
+      statusLabel.textContent = "PAUSED";
+      resumeBtn.focus();
+    } else {
+      menuOverlay.classList.add("hidden");
+      statusLabel.textContent = "BUILDING";
+      canvas.focus();
+    }
+  }
+
+  function drawBrick(x, y, color) {
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, CELL, CELL);
+    ctx.strokeStyle = "rgba(0,0,0,0.4)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x, y + CELL/2); ctx.lineTo(x + CELL, y + CELL/2);
+    ctx.moveTo(x + CELL/2, y); ctx.lineTo(x + CELL/2, y + CELL/2);
+    ctx.moveTo(x + CELL/4, y + CELL/2); ctx.lineTo(x + CELL/4, y + CELL);
+    ctx.moveTo(x + 3*CELL/4, y + CELL/2); ctx.lineTo(x + 3*CELL/4, y + CELL);
+    ctx.stroke();
+  }
+
+  function drawBomb(x, y) {
+    const cx = x + CELL/2, cy = y + CELL/2;
+    ctx.strokeStyle = "#aaa"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(cx, cy - 10);
+    ctx.quadraticCurveTo(cx + 5, cy - 18, cx + (Math.sin(frameCount/5)*5), cy - 22);
+    ctx.stroke();
+    ctx.fillStyle = frameCount % 4 < 2 ? "#ff0" : "#f00";
+    ctx.beginPath(); ctx.arc(cx + (Math.sin(frameCount/5)*5), cy - 22, 3, 0, 7); ctx.fill();
+    const grad = ctx.createRadialGradient(cx-4, cy-4, 2, cx, cy, 12);
+    grad.addColorStop(0, "#555"); grad.addColorStop(1, "#000");
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(cx, cy, 12, 0, 7); ctx.fill();
+  }
+
+  function drawWorker(vx, vy, dir) {
+    ctx.fillStyle = "#111"; ctx.fillRect(vx + 8, vy + 34, 6, 6); ctx.fillRect(vx + 18, vy + 34, 6, 6);
+    ctx.fillStyle = "#2a52be"; ctx.fillRect(vx + 7, vy + 18, 18, 16);
+    ctx.fillStyle = "#ffdbac"; ctx.fillRect(vx + 4, vy + 20, 4, 10); ctx.fillRect(vx + 24, vy + 20, 4, 10);
+    ctx.beginPath(); ctx.arc(vx + 16, vy + 12, 7, 0, 7); ctx.fill();
+    ctx.fillStyle = "#f0c200"; ctx.beginPath(); ctx.arc(vx + 16, vy + 10, 9, Math.PI, 0); ctx.fill();
+    ctx.fillRect(vx + 6, vy + 9, 20, 3);
+    ctx.fillStyle = "#000"; const eyeX = dir === 1 ? vx + 20 : vx + 8; ctx.fillRect(eyeX, vy + 11, 3, 3);
+  }
+
+  function render() {
+    frameCount++;
+    if (shakeAmount > 0) {
+      const x = (Math.random() - 0.5) * shakeAmount;
+      const y = (Math.random() - 0.5) * shakeAmount;
+      container.style.transform = `translate(${x}px, ${y}px)`;
+      shakeAmount *= 0.85; 
+      if (shakeAmount < 0.5) { shakeAmount = 0; container.style.transform = `translate(0,0)`; }
+    }
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    
+    ctx.strokeStyle = "rgba(255,255,255,0.03)";
+    ctx.lineWidth = 1;
+    for(let i=0; i<=COLS; i++) { ctx.beginPath(); ctx.moveTo(i*CELL, 0); ctx.lineTo(i*CELL, canvas.height); ctx.stroke(); }
+    for(let i=0; i<=ROWS; i++) { ctx.beginPath(); ctx.moveTo(0, i*CELL); ctx.lineTo(canvas.width, i*CELL); ctx.stroke(); }
+
+    const exitY = CELL * 2;
+    ctx.shadowBlur = Math.sin(frameCount/10)*10 + 20;
+    ctx.shadowColor = "#0f0";
+    ctx.fillStyle = "#008000";
+    ctx.fillRect(-8, exitY, 12, CELL * 2); 
+    ctx.fillRect(COLS * CELL - 4, exitY, 12, CELL * 2);
+    ctx.shadowBlur = 0;
+
+    if(board) {
+      for(let r=0; r<ROWS; r++) for(let c=0; c<COLS; c++) {
+        if(board[r][c] === 1) drawBrick(c*CELL, r*CELL, "#8b4513");
+        if(board[r][c] === 2) drawBomb(c*CELL, r*CELL);
+      }
+    }
+
+    if(currentShape) {
+      currentShape.forEach((row, r) => row.forEach((v, c) => { 
+        if(v) {
+          if(currentShapeName === "bomb") drawBomb((shapeCol+c)*CELL, (shapeRow+r)*CELL);
+          else drawBrick((shapeCol+c)*CELL, (shapeRow+r)*CELL, "#cd853f");
+        }
+      }));
+    }
+
+    if(worker && worker.alive && !worker.reachedExit) {
+      const targetX = worker.col * CELL, targetY = (worker.row - 1) * CELL;
+      worker.visualX += (targetX - worker.visualX) * 0.3;
+      worker.visualY += (targetY - worker.visualY) * 0.3;
+      drawWorker(worker.visualX, worker.visualY, worker.dir);
+    }
+  }
+
+  function tick(ts) {
+    if(running && !gameOver) {
+      let dt = ts - (lastTs || ts); lastTs = ts;
+      timerMs += dt;
+      bombFuses.forEach((v, k) => { v -= dt; bombFuses.set(k, v); if(v <= 0) { let [r,c] = k.split(",").map(Number); explodeAt(r,c); } });
+      if(!currentShape) spawn();
+      dropAcc += dt; 
+      const interval = 1200 - speedLevel*200;
+      while(dropAcc >= interval) { 
+        dropAcc -= interval; 
+        if(currentShape && checkWorkerCrush(shapeRow+1, shapeCol, currentShape)) {
+            shapeRow++;
+            worker.alive = false;
+            endGame(false, "CRUSHED");
+            break;
+        }
+        if(currentShape && !collidesWithWorld(shapeRow+1, shapeCol, currentShape)) {
+          shapeRow++; 
+        } else if(currentShape) { lock(); break; } 
+      }
+      workerAcc += dt; if(workerAcc > 180) { workerAcc=0; updateWorker(); }
+      
+      const totalSec = Math.floor(timerMs/1000);
+      const m = String(Math.floor(totalSec / 60)).padStart(2, '0');
+      const s = String(totalSec % 60).padStart(2, '0');
+      document.getElementById("time").textContent = `${m}:${s}`;
+    } else {
+      lastTs = ts;
+    }
+    render();
+    requestAnimationFrame(tick);
+  }
+
+  // --- MENU NAVIGATION LOGIC ---
+  const navItems = Array.from(document.querySelectorAll('.nav-item'));
+  let currentNavIndex = 0;
+
+  function updateNavFocus() {
+    navItems[currentNavIndex].focus();
+  }
+
+  // Menu specific keyboard listener
+  menuOverlay.addEventListener('keydown', e => {
+    if (menuOverlay.classList.contains('hidden')) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      currentNavIndex = (currentNavIndex + 1) % navItems.length;
+      updateNavFocus();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      currentNavIndex = (currentNavIndex - 1 + navItems.length) % navItems.length;
+      updateNavFocus();
+    } else if (e.key === "Enter" && document.activeElement.tagName !== 'SELECT') {
+      // For buttons, Enter triggers click. For selects, it opens the dropdown natively.
+      document.activeElement.click();
+    }
+  });
+
+  // Global Input Handling
+  resumeBtn.onclick = () => {
+    if (firstLoad || gameOver) {
+        initGame();
+    } else {
+        toggleMenu();
+    }
+  };
+  restartBtn.onclick = () => initGame();
+  document.getElementById("btn-pause").onclick = () => toggleMenu();
+
+  document.addEventListener("keydown", e => {
+    // Menu toggle keys
+    if(e.code === "Space" || e.code === "Enter") { 
+        if (!running || gameOver) {
+          // Handled by menu listener or focused button
+          return;
+        }
+        toggleMenu();
+        return; 
+    }
+    
+    if(!running || gameOver) return;
+
+    // Game controls
+    if(e.key === "ArrowLeft") { if (!collidesWithWorld(shapeRow, shapeCol-1, currentShape) && !checkWorkerCrush(shapeRow, shapeCol-1, currentShape)) shapeCol--; }
+    if(e.key === "ArrowRight") { if (!collidesWithWorld(shapeRow, shapeCol+1, currentShape) && !checkWorkerCrush(shapeRow, shapeCol+1, currentShape)) shapeCol++; }
+    if(e.key === "ArrowDown") hardDrop();
+    if(e.key === "ArrowUp") { 
+        if(currentShapeName === "bomb") return;
+        let r = rotate(currentShape); 
+        if(!collidesWithWorld(shapeRow, shapeCol, r) && !checkWorkerCrush(shapeRow, shapeCol, r)) currentShape = r; 
+    }
+  });
+
+  // Mobile/Mouse Buttons
+  document.getElementById("btn-left").onclick = (e) => { e.preventDefault(); if(running && !gameOver) if (!collidesWithWorld(shapeRow, shapeCol-1, currentShape) && !checkWorkerCrush(shapeRow, shapeCol-1, currentShape)) shapeCol--; };
+  document.getElementById("btn-right").onclick = (e) => { e.preventDefault(); if(running && !gameOver) if (!collidesWithWorld(shapeRow, shapeCol+1, currentShape) && !checkWorkerCrush(shapeRow, shapeCol+1, currentShape)) shapeCol++; };
+  document.getElementById("btn-rotate").onclick = (e) => { e.preventDefault(); if(running && !gameOver && currentShapeName !== "bomb") { let r = rotate(currentShape); if(!collidesWithWorld(shapeRow, shapeCol, r) && !checkWorkerCrush(shapeRow, shapeCol, r)) currentShape = r; } };
+  document.getElementById("btn-down").onclick = (e) => { e.preventDefault(); if(running && !gameOver) hardDrop(); };
+
+  toggleMenu(); 
+  requestAnimationFrame(tick);
+})();
+</script>
 </body>
 </html>
