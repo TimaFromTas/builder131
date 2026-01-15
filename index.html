@@ -82,15 +82,12 @@
     </div>
   </div>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
 <script>
-    const firebaseConfig = {
+  // 2. НАСТРОЙКИ FIREBASE
+  const firebaseConfig = {
     apiKey: "AIzaSyD-DalO0ffnu8zJDY45jmr-RGRKBsp7mbs",
     authDomain: "builder131.firebaseapp.com",
     projectId: "builder131",
@@ -99,14 +96,12 @@
     appId: "1:552002450795:web:fad81570be1d340f42082e"
   };
 
-    firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore(); 
-  </script>
+  // 3. ИНИЦИАЛИЗАЦИЯ
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
-    const COLS = 14, ROWS = 20, CELL = 32;
+  // 4. ВЕСЬ ОСТАЛЬНОЙ КОД ИГРЫ
+  const COLS = 14, ROWS = 20, CELL = 32;
   const canvas = document.getElementById("game"), ctx = canvas.getContext("2d");
   const container = document.getElementById("game-container");
   const menuOverlay = document.getElementById("menu-overlay");
@@ -184,14 +179,14 @@
     if (name) {
       localStorage.setItem('builder_name', name);
       try {
-        await addDoc(collection(db, "leaderboard"), {
+        await db.collection("leaderboard").add({
           playerName: name,
           country: countrySelect.value,
           timeFormatted: formatted,
           timeInSeconds: sec,
           speed: document.getElementById("speed-select").options[document.getElementById("speed-select").selectedIndex].text.toLowerCase(),
           difficulty: document.getElementById("diff-select").selectedIndex + 1,
-          createdAt: serverTimestamp()
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
       } catch (e) { console.error("Firebase error", e); }
     }
@@ -207,7 +202,6 @@
 
   function updateWorker() {
     if (!worker || !worker.alive || worker.reachedExit || gameOver || !running) return;
-    // Зеленые двери на 2 клетки ниже верхнего края (row 2-3)
     if (worker.row === 3 && ((worker.col === 0 && worker.dir === -1) || (worker.col === COLS - 1 && worker.dir === 1))) {
       worker.reachedExit = true; endGame(true, "VICTORY"); return;
     }
@@ -276,14 +270,9 @@
       shakeAmount *= 0.9; if (shakeAmount < 0.2) { shakeAmount = 0; container.style.transform = `translate(0,0)`; }
     }
     ctx.clearRect(0,0,canvas.width,canvas.height);
-    
-    // Зеленые двери (2 клетки от верха)
     ctx.fillStyle = "#008000"; ctx.fillRect(0, CELL * 2, 8, CELL * 2); ctx.fillRect(canvas.width - 8, CELL * 2, 8, CELL * 2);
-
     for(let r=0; r<ROWS; r++) for(let c=0; c<COLS; c++) {
-      if(board[r][c] === 1) {
-        ctx.fillStyle = "#8b4513"; ctx.fillRect(c*CELL, r*CELL, CELL-1, CELL-1);
-      }
+      if(board[r][c] === 1) { ctx.fillStyle = "#8b4513"; ctx.fillRect(c*CELL, r*CELL, CELL-1, CELL-1); }
     }
     if(currentShape) {
       ctx.fillStyle = "#cd853f";
@@ -316,7 +305,6 @@
     render(); requestAnimationFrame(tick);
   }
 
-  // Controls
   resumeBtn.onclick = () => (firstLoad || gameOver) ? initGame() : (menuOverlay.classList.add("hidden"), running=true);
   restartBtn.onclick = () => initGame();
   document.getElementById("btn-pause").onclick = () => { running = false; menuOverlay.classList.remove("hidden"); menuHeader.textContent="PAUSED"; };
@@ -332,9 +320,9 @@
     }
   });
 
-  document.getElementById("btn-left").onclick = () => { if(running && !collidesWithWorld(shapeRow, shapeCol-1, currentShape)) shapeCol--; };
-  document.getElementById("btn-right").onclick = () => { if(running && !collidesWithWorld(shapeRow, shapeCol+1, currentShape)) shapeCol++; };
-  document.getElementById("btn-rotate").onclick = () => { if(running) { let r = currentShape[0].map((_, i) => currentShape.map(row => row[i]).reverse()); if(!collidesWithWorld(shapeRow, shapeCol, r)) currentShape = r; } };
+  document.getElementById("btn-left").onclick = () => { if(running && !collidesWithWorld(shapeRow, shapeCol-1, currentShape) && !checkWorkerCrush(shapeRow, shapeCol-1, currentShape)) shapeCol--; };
+  document.getElementById("btn-right").onclick = () => { if(running && !collidesWithWorld(shapeRow, shapeCol+1, currentShape) && !checkWorkerCrush(shapeRow, shapeCol+1, currentShape)) shapeCol++; };
+  document.getElementById("btn-rotate").onclick = () => { if(running) { let r = currentShape[0].map((_, i) => currentShape.map(row => row[i]).reverse()); if(!collidesWithWorld(shapeRow, shapeCol, r) && !checkWorkerCrush(shapeRow, shapeCol, r)) currentShape = r; } };
   document.getElementById("btn-down").onclick = () => hardDrop();
 
   requestAnimationFrame(tick);
@@ -342,4 +330,5 @@
 </body>
 
 </html>
+
 
