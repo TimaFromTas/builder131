@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Builder — Version 1.3.2</title>
+  <style>
+    :root {
+      --primary-color: #f0c200;
+      --bg-dark: #121212;
+      --panel-bg: #222;
+      --accent-orange: #d28b22;
+      --focus-glow: rgba(240, 194, 0, 0.4);
+    }
+    
+    * { box-sizing: border-box; touch-action: manipulation; }
+
+    body {
+      margin: 0;
+      background: var(--bg-dark);
+      color: #eaeaea;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow: hidden;
+      padding: 10px;
+    }
+
+    #game-wrapper {
+      transition: transform 0.2s ease-out;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #game-container {
+      position: relative;
+      width: 100%;
+      max-width: 500px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(18px, 5vw, 24px);
+      font-weight: 700;
+      color: var(--primary-color);
+      text-align: center;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .bar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px;
+      background: var(--panel-bg);
+      border: 1px solid #444;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+
+    .stats-group {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .zoom-controls {
+      display: flex;
+      gap: 5px;
+      background: #111;
+      padding: 2px;
+      border-radius: 8px;
+      border: 1px solid #333;
+    }
+
+    .zoom-btn {
+      background: #333;
+      color: var(--primary-color);
+      border: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .zoom-btn:active { background: #444; }
+
+    .stats { font-family: monospace; font-size: 18px; color: var(--primary-color); font-weight: bold; }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 14 / 20;
+      background: #0a0a0a;
+      border: 3px solid #333;
+      border-radius: 8px;
+      box-shadow: inset 0 0 20px #000;
+    }
+
+    #menu-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      backdrop-filter: blur(5px);
+      padding: 20px;
+    }
+
+    .menu-content {
+      background: var(--panel-bg);
+      padding: 25px;
+      border: 2px solid var(--primary-color);
+      box-shadow: 0 0 40px rgba(0,0,0,0.8);
+      width: 100%;
+      max-width: 300px;
+      text-align: center;
+      border-radius: 16px;
+    }
+
+    .menu-title {
+      font-size: 24px;
+      color: var(--primary-color);
+      margin-bottom: 20px;
+      font-weight: 800;
+      letter-spacing: 1px;
+    }
+
+    .menu-group {
+      margin-bottom: 12px;
+      text-align: left;
+    }
+
+    .menu-group label {
+      font-size: 10px;
+      color: #888;
+      text-transform: uppercase;
+      margin-left: 4px;
+    }
+
+    select {
+      width: 100%;
+      font-size: 14px;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #444;
+      background: #111;
+      color: #fff;
+      margin-top: 4px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .btn-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .menu-btn {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+      outline: none;
+    }
+
+    .primary-btn { background: var(--primary-color); color: #000; }
+    .secondary-btn { background: #444; color: #fff; }
+    .ad-btn { background: transparent; color: var(--primary-color); border: 1px solid var(--primary-color); font-size: 12px; margin-top: 5px;}
+
+    .controls {
+      display: none;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+      width: 100%;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .ctrl-btn {
+      background: #333;
+      border-radius: 12px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      color: white;
+      user-select: none;
+      border: 1px solid #444;
+      box-shadow: 0 4px 0 #1a1a1a;
+      cursor: pointer;
+    }
+    
+    .ctrl-btn:active { background: #555; transform: translateY(2px); box-shadow: 0 2px 0 #1a1a1a; }
+    .hint { font-size: 10px; color: #666; text-align: center; margin-top: 5px; }
+
+    @media (pointer: coarse) {
+      .controls { display: grid; }
+      .hint { display: none; }
+    }
+    
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <div id="game-wrapper">
+    <div id="game-container">
+      <h1>BUILDER 1.3.2</h1>
+      
+      <div class="bar">
+        <div id="status-label" style="font-size: 12px; color: #aaa; font-weight: bold;">READY</div>
+        
+        <div class="stats-group">
+          <div class="zoom-controls">
+            <button class="zoom-btn" id="zoom-out" title="Scale Down">−</button>
+            <button class="zoom-btn" id="zoom-in" title="Scale Up">+</button>
+          </div>
+          <div id="time" class="stats">00:00</div>
+        </div>
+      </div>
+
+      <div id="menu-overlay" role="dialog" aria-modal="true">
+        <div class="menu-content">
+          <div id="menu-header" class="menu-title">BUILDER</div>
+          
+          <div class="menu-group">
+            <label for="speed-select">Speed Level</label>
+            <select id="speed-select" class="nav-item">
+              <option value="1">Easy</option>
+              <option value="3" selected>Medium</option>
+              <option value="5">Hard</option>
+            </select>
+          </div>
+
+          <div class="menu-group">
+            <label for="diff-select">Difficulty (Obstacles)</label>
+            <select id="diff-select" class="nav-item">
+              <option value="0">Empty</option>
+              <option value="10">Middle</option>
+              <option value="20" selected>Expert</option>
+            </select>
+          </div>
+
+          <div class="btn-stack">
+            <button id="resume-btn" class="menu-btn primary-btn nav-item">START GAME</button>
+            <button id="restart-btn" class="menu-btn secondary-btn nav-item">RESTART</button>
+            <button id="ad-placeholder" class="menu-btn ad-btn nav-item">AD (BONUS)</button>
+          </div>
+        </div>
+      </div>
+
+      <canvas id="game" width="448" height="640"></canvas>
+
+      <div class="controls">
+        <div class="ctrl-btn" id="btn-down" title="Drop">↓</div>
+        <div class="ctrl-btn" id="btn-left" title="Left">←</div>
+        <div class="ctrl-btn" id="btn-rotate" title="Rotate">↻</div>
+        <div class="ctrl-btn" id="btn-right" title="Right">→</div>
+      </div>
+
+      <div class="hint">Arrows: Move/Rotate/Drop | Space/Enter: Menu</div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const COLS = 14, ROWS = 20, CELL = 32;
+  const canvas = document.getElementById("game"), ctx = canvas.getContext("2d");
+  const wrapper = document.getElementById("game-wrapper");
+  const container = document.getElementById("game-container");
+  const menuOverlay = document.getElementById("menu-overlay");
+  const menuHeader = document.getElementById("menu-header");
+  const resumeBtn = document.getElementById("resume-btn");
+  const restartBtn = document.getElementById("restart-btn");
+  const statusLabel = document.getElementById("status-label");
+  
+  let board = null, worker = null, bombFuses = new Map();
+  let running = false, gameOver = false, firstLoad = true, lastTs = 0;
+  let dropAcc = 0, workerAcc = 0, timerMs = 0, frameCount = 0;
+  let currentShape = null, currentShapeName = "", shapeRow = 0, shapeCol = 0, speedLevel = 3;
+  let shakeAmount = 0;
+  let explosionFlash = 0;
+  let currentScale = 1.0;
+
+  const SHAPES = [
+    { name:"I", matrix:[[1,1,1,1]] }, { name:"J", matrix:[[1,0,0],[1,1,1]] },
+    { name:"L", matrix:[[0,0,1],[1,1,1]] }, { name:"O", matrix:[[1,1],[1,1]] },
+    { name:"S", matrix:[[0,1,1],[1,1,0]] }, { name:"T", matrix:[[0,1,0],[1,1,1]] },
+    { name:"Z", matrix:[[1,1,0],[0,1,1]] }
+  ];
+
+  // Scale Functions
+  function updateScale(delta) {
+    currentScale = Math.min(Math.max(0.5, currentScale + delta), 1.5);
+    wrapper.style.transform = `scale(${currentScale})`;
+  }
+
+  document.getElementById('zoom-in').onclick = () => updateScale(0.1);
+  document.getElementById('zoom-out').onclick = () => updateScale(-0.1);
+
+  function triggerShake(intensity = 6) { shakeAmount = intensity; }
+
+  function initGame() {
+    board = Array.from({length: ROWS}, () => Array(COLS).fill(0));
+    const startCol = Math.floor(COLS / 2);
+    const startRow = ROWS - 1;
+    worker = {
+      row: startRow, col: startCol,
+      visualX: startCol * CELL, visualY: (startRow - 1) * CELL,
+      dir: 1, alive: true, reachedExit: false
+    };
+    bombFuses = new Map();
+    gameOver = false;
+    running = true;
+    firstLoad = false;
+    lastTs = performance.now();
+    dropAcc = 0; workerAcc = 0; timerMs = 0;
+    currentShape = null;
+    speedLevel = +document.getElementById("speed-select").value;
+    generateObstacles(+document.getElementById("diff-select").value);
+    
+    resumeBtn.textContent = "CONTINUE";
+    menuOverlay.classList.add("hidden");
+    statusLabel.textContent = "BUILDING";
+  }
+
+  function generateObstacles(count) {
+    if (!board || count === 0) return;
+    let placed = 0;
+    while(placed < count) {
+      let r = ROWS - 1 - Math.floor(Math.random() * 8);
+      let c = Math.floor(Math.random() * COLS);
+      if (board[r][c] === 0 && !(worker && c === worker.col && r >= worker.row - 1)) {
+        board[r][c] = 1;
+        placed++;
+      }
+    }
+  }
+
+  function isSolid(r, c) {
+    if (!board || r < 0 || r >= ROWS || c < 0 || c >= COLS) return true;
+    return board[r][c] !== 0;
+  }
+
+  function workerOccupies(r, c) {
+    return worker && worker.alive && !worker.reachedExit && c === worker.col && (r === worker.row || r === worker.row - 1);
+  }
+
+  function rotate(m) { return m[0].map((_, i) => m.map(row => row[i]).reverse()); }
+
+  function explodeAt(centerR, centerC) {
+    triggerShake(12);
+    explosionFlash = 1.0;
+    for(let dr=-1; dr<=1; dr++) for(let dc=-1; dc<=1; dc++) {
+      let rr = centerR + dr, cc = centerC + dc;
+      if (board && rr>0 && rr<ROWS && cc>=0 && cc<COLS) {
+        if (workerOccupies(rr, cc)) {
+          worker.alive = false;
+          endGame(false, "KABOOM!");
+        }
+        board[rr][cc] = 0; bombFuses.delete(`${rr},${cc}`);
+      }
+    }
+  }
+
+  function updateWorker() {
+    if (!worker || !worker.alive || worker.reachedExit || gameOver || !running) return;
+    if (worker.row === 3 && ((worker.col === 0 && worker.dir === -1) || (worker.col === COLS - 1 && worker.dir === 1))) {
+      worker.reachedExit = true;
+      endGame(true, "VICTORY!");
+      return;
+    }
+    
+    if (worker.row < ROWS - 1 && !isSolid(worker.row + 1, worker.col)) {
+        let blockedByShape = false;
+        if (currentShape) {
+            currentShape.forEach((row, r) => row.forEach((v, c) => {
+                if(v && (shapeRow+r === worker.row+1) && (shapeCol+c === worker.col)) blockedByShape = true;
+            }));
+        }
+        if (!blockedByShape) { worker.row++; return; }
+    }
+
+    const canOccupy = (r, c) => {
+        if (r < 1 || r >= ROWS || c < 0 || c >= COLS) return false;
+        if (isSolid(r, c) || isSolid(r - 1, c)) return false;
+        let blockedByShape = false;
+        if (currentShape) {
+            currentShape.forEach((row, sr) => row.forEach((v, sc) => {
+                if(v && ( (shapeRow+sr === r && shapeCol+sc === c) || (shapeRow+sr === r-1 && shapeCol+sc === c) )) blockedByShape = true;
+            }));
+        }
+        return !blockedByShape;
+    };
+
+    let nc = worker.col + worker.dir;
+    if (nc < 0 || nc >= COLS) { worker.dir *= -1; return; }
+    
+    if (canOccupy(worker.row, nc)) { worker.col = nc; }
+    else if (canOccupy(worker.row - 1, nc) && isSolid(worker.row, nc)) { worker.row--; worker.col = nc; }
+    else { worker.dir *= -1; }
+  }
+
+  function collidesWithWorld(row, col, shape) {
+    if(!shape || !board) return false;
+    for(let r=0; r<shape.length; r++) for(let c=0; c<shape[r].length; c++) {
+      if(shape[r][c] === 0) continue;
+      let rr = row + r, cc = col + c;
+      if (rr<0 || rr>=ROWS || cc<0 || cc>=COLS || board[rr][cc]!==0) return true;
+    }
+    return false;
+  }
+
+  function checkWorkerCrush(row, col, shape) {
+    if(!shape || !worker) return false;
+    for(let r=0; r<shape.length; r++) for(let c=0; c<shape[r].length; c++) {
+      if(shape[r][c] !== 0 && workerOccupies(row + r, col + c)) return true;
+    }
+    return false;
+  }
+
+  function spawn() {
+    let isBomb = Math.random() < 0.15;
+    let s = isBomb ? {name:"bomb", matrix:[[1]]} : SHAPES[Math.floor(Math.random()*SHAPES.length)];
+    currentShape = s.matrix.map(row => [...row]); currentShapeName = s.name;
+    shapeRow = 0; shapeCol = Math.floor((COLS - currentShape[0].length)/2);
+    if(collidesWithWorld(shapeRow, shapeCol, currentShape)) endGame(false, "BURIED");
+  }
+
+  function lock() {
+    if(!currentShape || !board) return;
+    triggerShake(6);
+    if(checkWorkerCrush(shapeRow, shapeCol, currentShape)) {
+        worker.alive = false;
+        endGame(false, "CRUSHED");
+        return;
+    }
+    
+    if (currentShapeName === "bomb") {
+        board[shapeRow][shapeCol] = 2;
+        bombFuses.set(`${shapeRow},${shapeCol}`, 1500);
+    } else {
+      currentShape.forEach((row, r) => row.forEach((v, c) => { if(v) board[shapeRow+r][shapeCol+c] = 1; }));
+      for(let r=ROWS-1; r>=0; r--) if(board[r].every(v => v !== 0)) { board.splice(r, 1); board.unshift(Array(COLS).fill(0)); r++; }
+    }
+    currentShape = null;
+  }
+
+  function hardDrop() {
+    if(!currentShape || gameOver || !running) return;
+    while(true) {
+        if (checkWorkerCrush(shapeRow + 1, shapeCol, currentShape)) {
+            shapeRow++;
+            worker.alive = false;
+            endGame(false, "CRUSHED");
+            return;
+        }
+        if (collidesWithWorld(shapeRow + 1, shapeCol, currentShape)) break;
+        shapeRow++;
+    }
+    lock();
+  }
+
+  function endGame(isWin, msg) {
+    gameOver = true; running = false;
+    menuHeader.textContent = isWin ? "VICTORY" : "GAME OVER";
+    menuHeader.style.color = isWin ? "#4caf50" : "#ff5252";
+    resumeBtn.textContent = "START AGAIN";
+    statusLabel.textContent = isWin ? "FINISHED" : "FAILED";
+    menuOverlay.classList.remove("hidden");
+    currentNavIndex = navItems.indexOf(resumeBtn);
+    resumeBtn.focus();
+  }
+
+  function toggleMenu() {
+    if (gameOver) return;
+    if (firstLoad) {
+        menuHeader.textContent = "BUILDER";
+        menuHeader.style.color = "var(--primary-color)";
+        resumeBtn.textContent = "START GAME";
+        menuOverlay.classList.remove("hidden");
+        currentNavIndex = navItems.indexOf(resumeBtn);
+        resumeBtn.focus();
+        return;
+    }
+    running = !running;
+    if (!running) {
+      menuHeader.textContent = "PAUSED";
+      menuHeader.style.color = "var(--primary-color)";
+      menuOverlay.classList.remove("hidden");
+      statusLabel.textContent = "PAUSE";
+      currentNavIndex = navItems.indexOf(resumeBtn);
+      resumeBtn.focus();
+    } else {
+      menuOverlay.classList.add("hidden");
+      statusLabel.textContent = "BUILDING";
+      canvas.focus();
+    }
+  }
+
+  function drawBrick(x, y, color) {
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, CELL, CELL);
+    ctx.strokeStyle = "rgba(0,0,0,0.4)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x, y + CELL/2); ctx.lineTo(x + CELL, y + CELL/2);
+    ctx.moveTo(x + CELL/2, y); ctx.lineTo(x + CELL/2, y + CELL/2);
+    ctx.moveTo(x + CELL/4, y + CELL/2); ctx.lineTo(x + CELL/4, y + CELL);
+    ctx.moveTo(x + 3*CELL/4, y + CELL/2); ctx.lineTo(x + 3*CELL/4, y + CELL);
+    ctx.stroke();
+  }
+
+  function drawBomb(x, y) {
+    const cx = x + CELL/2, cy = y + CELL/2;
+    ctx.strokeStyle = "#aaa"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(cx, cy - 10);
+    ctx.quadraticCurveTo(cx + 5, cy - 18, cx + (Math.sin(frameCount/5)*5), cy - 22);
+    ctx.stroke();
+    ctx.fillStyle = frameCount % 4 < 2 ? "#ff0" : "#f00";
+    ctx.beginPath(); ctx.arc(cx + (Math.sin(frameCount/5)*5), cy - 22, 3, 0, 7); ctx.fill();
+    const grad = ctx.createRadialGradient(cx-4, cy-4, 2, cx, cy, 12);
+    grad.addColorStop(0, "#555"); grad.addColorStop(1, "#000");
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(cx, cy, 12, 0, 7); ctx.fill();
+  }
+
+  function drawWorker(vx, vy, dir) {
+    const isMoving = Math.abs(worker.col * CELL - vx) > 1;
+    let step = 0; if (isMoving) step = Math.sin(frameCount * 0.4) * 6;
+    ctx.fillStyle = "#1a1a1a";
+    ctx.fillRect(vx + 9, vy + 32, 5, 20 + step); ctx.fillRect(vx + 18, vy + 32, 5, 20 - step);
+    ctx.fillStyle = "#000"; ctx.fillRect(vx + 7, vy + 10 + step, 9, 5); ctx.fillRect(vx + 16, vy + 10 - step, 9, 5);
+    ctx.fillStyle = "#2a52be"; ctx.fillRect(vx + 7, vy + 18, 18, 18);
+    ctx.fillStyle = "#ffdbac"; ctx.fillRect(vx + 3, vy + 20, 5, 19); ctx.fillRect(vx + 24, vy + 20, 5, 19);
+    ctx.beginPath(); ctx.arc(vx + 16, vy + 12, 7, 0, 7); ctx.fill();
+    ctx.fillStyle = "#f0c200"; ctx.beginPath(); ctx.arc(vx + 16, vy + 10, 9, Math.PI, 0); ctx.fill(); ctx.fillRect(vx + 6, vy + 9, 20, 3);
+    ctx.fillStyle = "#000"; const offset = dir * 3; ctx.fillRect(vx + 11 + offset, vy + 11, 3, 3); ctx.fillRect(vx + 18 + offset, vy + 11, 3, 3);
+  }
+
+  function render() {
+    frameCount++;
+    if (shakeAmount > 0) {
+      const x = (Math.random() - 0.5) * shakeAmount;
+      const y = (Math.random() - 0.5) * shakeAmount;
+      container.style.transform = `translate(${x}px, ${y}px)`;
+      shakeAmount *= 0.85;
+      if (shakeAmount < 0.5) { shakeAmount = 0; container.style.transform = `translate(0,0)`; }
+    }
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.strokeStyle = "rgba(255,255,255,0.03)";
+    ctx.lineWidth = 1;
+    for(let i=0; i<=COLS; i++) { ctx.beginPath(); ctx.moveTo(i*CELL, 0); ctx.lineTo(i*CELL, canvas.height); ctx.stroke(); }
+    for(let i=0; i<=ROWS; i++) { ctx.beginPath(); ctx.moveTo(0, i*CELL); ctx.lineTo(canvas.width, i*CELL); ctx.stroke(); }
+
+    const exitY = CELL * 2;
+    ctx.shadowBlur = Math.sin(frameCount/10)*10 + 20; ctx.shadowColor = "#0f0"; ctx.fillStyle = "#008000";
+    ctx.fillRect(-8, exitY, 12, CELL * 2); ctx.fillRect(COLS * CELL - 4, exitY, 12, CELL * 2);
+    ctx.shadowBlur = 0;
+
+    if(board) {
+      for(let r=0; r<ROWS; r++) for(let c=0; c<COLS; c++) {
+        if(board[r][c] === 1) drawBrick(c*CELL, r*CELL, "#8b4513");
+        if(board[r][c] === 2) drawBomb(c*CELL, r*CELL);
+      }
+    }
+
+    if(currentShape) {
+      currentShape.forEach((row, r) => row.forEach((v, c) => {
+        if(v) {
+          if(currentShapeName === "bomb") drawBomb((shapeCol+c)*CELL, (shapeRow+r)*CELL);
+          else drawBrick((shapeCol+c)*CELL, (shapeRow+r)*CELL, "#cd853f");
+        }
+      }));
+    }
+
+    if(worker && worker.alive && !worker.reachedExit) {
+      const targetX = worker.col * CELL, targetY = (worker.row - 1) * CELL;
+      worker.visualX += (targetX - worker.visualX) * 0.3; worker.visualY += (targetY - worker.visualY) * 0.3;
+      drawWorker(worker.visualX, worker.visualY, worker.dir);
+    }
+
+    if (explosionFlash > 0) {
+      ctx.fillStyle = `rgba(255, 255, 200, ${explosionFlash * 0.6})`;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      explosionFlash -= 0.05;
+    }
+  }
+
+  function tick(ts) {
+    if(running && !gameOver) {
+      let dt = ts - (lastTs || ts); lastTs = ts;
+      timerMs += dt;
+      bombFuses.forEach((v, k) => { v -= dt; bombFuses.set(k, v); if(v <= 0) { let [r,c] = k.split(",").map(Number); explodeAt(r,c); } });
+      if(!currentShape) spawn();
+      dropAcc += dt;
+      const interval = 1200 - speedLevel*200;
+      while(dropAcc >= interval) {
+        dropAcc -= interval;
+        if(currentShape && checkWorkerCrush(shapeRow+1, shapeCol, currentShape)) {
+            shapeRow++; worker.alive = false; endGame(false, "CRUSHED"); break;
+        }
+        if(currentShape && !collidesWithWorld(shapeRow+1, shapeCol, currentShape)) shapeRow++;
+        else if(currentShape) { lock(); break; }
+      }
+      workerAcc += dt; if(workerAcc > 180) { workerAcc=0; updateWorker(); }
+      const totalSec = Math.floor(timerMs/1000);
+      const m = String(Math.floor(totalSec / 60)).padStart(2, '0');
+      const s = String(totalSec % 60).padStart(2, '0');
+      document.getElementById("time").textContent = `${m}:${s}`;
+    } else { lastTs = ts; }
+    render();
+    requestAnimationFrame(tick);
+  }
+
+  const navItems = Array.from(document.querySelectorAll('.nav-item'));
+  let currentNavIndex = 0;
+
+  function updateNavFocus() { if (navItems[currentNavIndex]) navItems[currentNavIndex].focus(); }
+
+  document.addEventListener("keydown", e => {
+    if (!menuOverlay.classList.contains('hidden')) {
+      if (e.key === "ArrowDown") { e.preventDefault(); currentNavIndex = (currentNavIndex + 1) % navItems.length; updateNavFocus(); return; }
+      if (e.key === "ArrowUp") { e.preventDefault(); currentNavIndex = (currentNavIndex - 1 + navItems.length) % navItems.length; updateNavFocus(); return; }
+      if (e.key === "Enter" || e.code === "Space") { if (document.activeElement.tagName !== 'SELECT') { e.preventDefault(); document.activeElement.click(); } return; }
+    }
+    if (e.code === "Space" || e.code === "Enter") { if (gameOver) initGame(); else toggleMenu(); return; }
+    if(!running || gameOver) return;
+    if(e.key === "ArrowLeft") { if (!collidesWithWorld(shapeRow, shapeCol-1, currentShape) && !checkWorkerCrush(shapeRow, shapeCol-1, currentShape)) shapeCol--; }
+    if(e.key === "ArrowRight") { if (!collidesWithWorld(shapeRow, shapeCol+1, currentShape) && !checkWorkerCrush(shapeRow, shapeCol+1, currentShape)) shapeCol++; }
+    if(e.key === "ArrowDown") hardDrop();
+    if(e.key === "ArrowUp") { if(currentShapeName === "bomb") return; let r = rotate(currentShape); if(!collidesWithWorld(shapeRow, shapeCol, r) && !checkWorkerCrush(shapeRow, shapeCol, r)) currentShape = r; }
+  });
+
+  resumeBtn.onclick = () => { if (firstLoad || gameOver) initGame(); else toggleMenu(); };
+  restartBtn.onclick = () => initGame();
+
+  document.getElementById("btn-left").onclick = (e) => { e.preventDefault(); if(running && !gameOver) { if (!collidesWithWorld(shapeRow, shapeCol-1, currentShape) && !checkWorkerCrush(shapeRow, shapeCol-1, currentShape)) shapeCol--; } };
+  document.getElementById("btn-right").onclick = (e) => { e.preventDefault(); if(running && !gameOver) { if (!collidesWithWorld(shapeRow, shapeCol+1, currentShape) && !checkWorkerCrush(shapeRow, shapeCol+1, currentShape)) shapeCol++; } };
+  document.getElementById("btn-rotate").onclick = (e) => { e.preventDefault(); if(running && !gameOver && currentShapeName !== "bomb") { let r = rotate(currentShape); if(!collidesWithWorld(shapeRow, shapeCol, r) && !checkWorkerCrush(shapeRow, shapeCol, r)) currentShape = r; } };
+  document.getElementById("btn-down").onclick = (e) => { e.preventDefault(); if(running && !gameOver) hardDrop(); };
+
+  document.querySelectorAll('.ctrl-btn, .zoom-btn').forEach(btn => {
+    btn.addEventListener('touchstart', e => e.stopPropagation(), {passive: true});
+  });
+
+  toggleMenu();
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
