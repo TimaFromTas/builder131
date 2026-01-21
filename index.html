@@ -83,7 +83,22 @@
       border-radius: 8px;
       border: 1px solid #333;
     }
-
+	  
+    .menu-btn12 {
+      background: #333;
+      color: var(--primary-color);
+      border: none;
+      width: 50px;
+      height: 28px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+		
+    }
     .zoom-btn {
       background: #333;
       color: var(--primary-color);
@@ -251,6 +266,7 @@
         <div id="status-label" style="font-size: 12px; color: #aaa; font-weight: bold;">READY</div>
         
         <div class="stats-group">
+			<button id="mobile-menu-btn" class="menu-btn12">MENU</button>
           <div class="zoom-controls">
             <button class="zoom-btn" id="zoom-out" title="Scale Down">−</button>
             <button class="zoom-btn" id="zoom-in" title="Scale Up">+</button>
@@ -334,6 +350,7 @@
     wrapper.style.transform = `scale(${currentScale})`;
   }
 
+  document.getElementById('mobile-menu-btn').onclick = () => toggleMenu();
   document.getElementById('zoom-in').onclick = () => updateScale(0.1);
   document.getElementById('zoom-out').onclick = () => updateScale(-0.1);
 
@@ -728,3 +745,4 @@
 </body>
 
 </html>
+
