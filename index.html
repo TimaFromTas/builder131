@@ -699,6 +699,10 @@ const db = getFirestore(app);
     }
 
     ctx.clearRect(0,0,canvas.width,canvas.height);
+	ctx.strokeStyle = "rgba(255,255,255,0.03)";
+    ctx.lineWidth = 1;
+    for(let i=0; i<=COLS; i++) { ctx.beginPath(); ctx.moveTo(i*CELL, 0); ctx.lineTo(i*CELL, canvas.height); ctx.stroke(); }
+    for(let i=0; i<=ROWS; i++) { ctx.beginPath(); ctx.moveTo(0, i*CELL); ctx.lineTo(canvas.width, i*CELL); ctx.stroke(); }
     
     // Выход (Зеленые двери на 2 клетки вниз)
     const exitY = CELL * 2;
@@ -799,6 +803,7 @@ const db = getFirestore(app);
 </body>
 
 </html>
+
 
 
 
