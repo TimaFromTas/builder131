@@ -406,13 +406,14 @@ const db = getFirestore(app);
         lbList.innerHTML = "<div style='font-size:10px; color:#666;'>No records yet</div>";
         return;
       }
-      snap.forEach((doc, i) => {
-        const data = doc.data();
-        lbList.innerHTML += `
-          <div class="lb-row">
-            <span>${i+1}. <span class="lb-name">${data.playerName}</span></span>
-            <span class="lb-time">${data.time_display}</span>
-          </div>`;
+      players.forEach((player, index) => {
+    const position = index + 1; 
+      leaderboardContainer.innerHTML += `
+        <div class="leader-row">
+            <span>${position}. ${player.playerName}</span>
+            <span>${player.time_display}</span>
+        </div>
+       `;
       });
     } catch (e) {
       console.error(e);
@@ -777,4 +778,5 @@ const db = getFirestore(app);
 })();
 </script>
 </body>
+
 </html>
