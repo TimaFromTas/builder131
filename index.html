@@ -654,15 +654,26 @@ const db = getFirestore(app);
     ctx.fillRect(x, y, CELL, CELL);
     ctx.strokeStyle = "rgba(0,0,0,0.4)";
     ctx.lineWidth = 1;
-    ctx.strokeRect(x, y, CELL, CELL);
+    ctx.beginPath();
+    ctx.moveTo(x, y + CELL/2); ctx.lineTo(x + CELL, y + CELL/2);
+    ctx.moveTo(x + CELL/2, y); ctx.lineTo(x + CELL/2, y + CELL/2);
+    ctx.moveTo(x + CELL/4, y + CELL/2); ctx.lineTo(x + CELL/4, y + CELL);
+    ctx.moveTo(x + 3*CELL/4, y + CELL/2); ctx.lineTo(x + 3*CELL/4, y + CELL);
+    ctx.stroke();
   }
 
   function drawBomb(x, y) {
     const cx = x + CELL/2, cy = y + CELL/2;
-    ctx.fillStyle = "#000";
-    ctx.beginPath(); ctx.arc(cx, cy, 12, 0, 7); ctx.fill();
+    ctx.strokeStyle = "#aaa"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(cx, cy - 10);
+    ctx.quadraticCurveTo(cx + 5, cy - 18, cx + (Math.sin(frameCount/5)*5), cy - 22);
+    ctx.stroke();
     ctx.fillStyle = frameCount % 4 < 2 ? "#ff0" : "#f00";
-    ctx.fillRect(cx-2, cy-18, 4, 4);
+    ctx.beginPath(); ctx.arc(cx + (Math.sin(frameCount/5)*5), cy - 22, 3, 0, 7); ctx.fill();
+    const grad = ctx.createRadialGradient(cx-4, cy-4, 2, cx, cy, 12);
+    grad.addColorStop(0, "#555"); grad.addColorStop(1, "#000");
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(cx, cy, 12, 0, 7); ctx.fill();
   }
 
   function drawWorker(vx, vy, dir) {
@@ -691,9 +702,9 @@ const db = getFirestore(app);
     
     // Выход (Зеленые двери на 2 клетки вниз)
     const exitY = CELL * 2;
-    ctx.fillStyle = "#008000";
-    ctx.fillRect(0, exitY, 5, CELL * 2); 
-    ctx.fillRect(canvas.width - 5, exitY, 5, CELL * 2);
+    ctx.shadowBlur = Math.sin(frameCount/10)*10 + 20; ctx.shadowColor = "#0f0"; ctx.fillStyle = "#008000";
+    ctx.fillRect(-8, exitY, 12, CELL * 2); ctx.fillRect(COLS * CELL - 4, exitY, 12, CELL * 2);
+    ctx.shadowBlur = 0;
 
     if(board) {
       for(let r=0; r<ROWS; r++) for(let c=0; c<COLS; c++) {
@@ -788,6 +799,7 @@ const db = getFirestore(app);
 </body>
 
 </html>
+
 
 
 
