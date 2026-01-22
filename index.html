@@ -407,15 +407,17 @@ const db = getFirestore(app);
         return;
       }
 	let i = 0;
-      snap.forEach((doc, i) => {
-        const data = doc.data();
-		const position = ++i;
-        lbList.innerHTML += `
-          <div class="lb-row">
-            <span>${position}. <span class="lb-name">${data.playerName}</span></span>
-            <span class="lb-time">${data.time_display}</span>
-          </div>`;
-      });
+       lblList.innerHTML = ""; 
+       snap.forEach((doc) => {
+          const data = doc.data();
+          const position = ++i;
+       lblList.innerHTML += `
+        <div class="lb-row">
+          <span>${position}. <span class="lb-name">${data.playerName}</span></span>
+          <span class="lb-time">${data.time_display}</span>
+        </div>
+        `;
+       });
     } catch (e) {
       console.error(e);
       lbList.innerHTML = "<div style='font-size:10px; color:red;'>Index error (see console)</div>";
@@ -781,5 +783,6 @@ const db = getFirestore(app);
 </body>
 
 </html>
+
 
 
