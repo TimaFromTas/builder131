@@ -667,10 +667,15 @@ const db = getFirestore(app);
 
   function drawWorker(vx, vy, dir) {
     const isMoving = Math.abs(worker.col * CELL - vx) > 1;
-    let step = isMoving ? Math.sin(frameCount * 0.4) * 6 : 0;
+    let step = 0; if (isMoving) step = Math.sin(frameCount * 0.4) * 6;
+    ctx.fillStyle = "#1a1a1a";
+    ctx.fillRect(vx + 9, vy + 32, 5, 20 + step); ctx.fillRect(vx + 18, vy + 32, 5, 20 - step);
+    ctx.fillStyle = "#000"; ctx.fillRect(vx + 7, vy + 10 + step, 9, 5); ctx.fillRect(vx + 16, vy + 10 - step, 9, 5);
     ctx.fillStyle = "#2a52be"; ctx.fillRect(vx + 7, vy + 18, 18, 18);
-    ctx.fillStyle = "#ffdbac"; ctx.beginPath(); ctx.arc(vx + 16, vy + 12, 7, 0, 7); ctx.fill();
-    ctx.fillStyle = "#f0c200"; ctx.fillRect(vx + 6, vy + 5, 20, 5);
+    ctx.fillStyle = "#ffdbac"; ctx.fillRect(vx + 3, vy + 20, 5, 19); ctx.fillRect(vx + 24, vy + 20, 5, 19);
+    ctx.beginPath(); ctx.arc(vx + 16, vy + 12, 7, 0, 7); ctx.fill();
+    ctx.fillStyle = "#f0c200"; ctx.beginPath(); ctx.arc(vx + 16, vy + 10, 9, Math.PI, 0); ctx.fill(); ctx.fillRect(vx + 6, vy + 9, 20, 3);
+    ctx.fillStyle = "#000"; const offset = dir * 3; ctx.fillRect(vx + 11 + offset, vy + 11, 3, 3); ctx.fillRect(vx + 18 + offset, vy + 11, 3, 3);
   }
 
   function render() {
@@ -783,6 +788,7 @@ const db = getFirestore(app);
 </body>
 
 </html>
+
 
 
 
